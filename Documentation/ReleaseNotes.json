@@ -3857,6 +3857,10 @@
     "agents-use-crest": {
       "category": "new",
       "message": "On Mac, coding agents such as Claude Code and Codex can use Crest as their browser in the Spaces you choose: open and read tabs, click and type, take screenshots, and read a page’s console and network requests. Turn it on in Settings › Agents. Crest asks before each new agent connects, and every tab an agent uses shows its badge."
+    },
+    "animations-settings": {
+      "category": "improved",
+      "message": "Look and Feel has a new Animations section. Turn off Command palette there to open the command palette in place instead of growing it out of the address field."
     }
   }
 }

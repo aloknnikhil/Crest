@@ -2069,10 +2069,10 @@
     "Animals & Nature" : {
 
     },
-    "Animate into command palette" : {
+    "Animate pages when switching Spaces" : {
 
     },
-    "Animate pages when switching Spaces" : {
+    "Animations" : {
 
     },
     "Another browser" : {
@@ -3714,6 +3714,9 @@
           }
         }
       }
+    },
+    "Command palette" : {
+
     },
     "Command-click" : {
 
