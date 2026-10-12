@@ -974,6 +974,10 @@ final class BrowserInteractionModelTests: XCTestCase {
 
         XCTAssertEqual(chrome.commandPaletteMode, .newTab)
         XCTAssertEqual(chrome.startPageFocusRequest, focusedRequest)
+
+        chrome.openNewTab(isStartPageSelected: false)
+
+        XCTAssertNil(chrome.commandPaletteMode)
     }
 
     func testRootNewTabActionKeepsTheSelectedStartPageCohesive() throws {

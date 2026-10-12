@@ -79,7 +79,14 @@ final class BrowserChromeState {
         commandPaletteMode = .newTab
     }
 
+    /// New Tab toggles its own palette: asked again while that palette is
+    /// open, it closes it. A palette editing the address turns into a new
+    /// tab's.
     func openNewTab(isStartPageSelected: Bool) {
+        if commandPaletteMode == .newTab {
+            dismissCommandPalette()
+            return
+        }
         guard isStartPageSelected else {
             presentCommandPalette()
             return

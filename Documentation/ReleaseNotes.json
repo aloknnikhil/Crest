@@ -3861,6 +3861,10 @@
     "animations-settings": {
       "category": "improved",
       "message": "Look and Feel has a new Animations section. Turn off Command palette there to open the command palette in place instead of growing it out of the address field."
+    },
+    "new-tab-shortcut-closes-palette": {
+      "category": "fixed",
+      "message": "Pressing Command-T again closes the new tab palette."
     }
   }
 }
