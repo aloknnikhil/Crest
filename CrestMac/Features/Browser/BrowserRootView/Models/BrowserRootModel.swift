@@ -357,6 +357,7 @@ extension BrowserRootModel {
     }
 
     func hideSidebar(reduceMotion: Bool) {
+        let reduceMotion = sidebarReducesMotion(reduceMotion)
         chrome.utilityPresentation.dismiss()
         guard !reduceMotion else {
             cancelSidebarMorph()
@@ -392,6 +393,7 @@ extension BrowserRootModel {
     }
 
     func toggleSidebar(reduceMotion: Bool) {
+        let reduceMotion = sidebarReducesMotion(reduceMotion)
         switch sidebarPresentation.sidebarToggleAction.kind {
         case .hide:
             hideSidebar(reduceMotion: reduceMotion)
@@ -447,6 +449,7 @@ extension BrowserRootModel {
     }
 
     func presentFloatingSidebar(reduceMotion: Bool) {
+        let reduceMotion = sidebarReducesMotion(reduceMotion)
         guard chrome.columnVisibility == .detailOnly else { return }
         cancelSidebarMorph()
         withAnimation(
@@ -457,6 +460,7 @@ extension BrowserRootModel {
     }
 
     func dismissFloatingSidebar(reduceMotion: Bool) {
+        let reduceMotion = sidebarReducesMotion(reduceMotion)
         cancelSidebarMorph()
         if sidebarPresentation == .floating {
             chrome.utilityPresentation.dismiss()
@@ -487,6 +491,7 @@ extension BrowserRootModel {
     }
 
     func columnVisibilityChanged(reduceMotion: Bool) {
+        let reduceMotion = sidebarReducesMotion(reduceMotion)
         guard chrome.columnVisibility != .detailOnly else {
             chrome.utilityPresentation.dismiss()
             return
@@ -777,6 +782,12 @@ extension BrowserRootModel {
 // MARK: - Animation
 
 extension BrowserRootModel {
+    /// Whether the sidebar shows and hides at once: under Reduce Motion, or
+    /// when Look and Feel turns its animation off.
+    func sidebarReducesMotion(_ reduceMotion: Bool) -> Bool {
+        reduceMotion || !BrowserDeviceAppearanceStore.shared.animatesSidebar
+    }
+
     func accessibleAnimation(
         _ animation: Animation,
         _ reduceMotion: Bool

@@ -13,6 +13,7 @@ enum BrowserLookAndFeelDefaults {
     static let pinColumns = 0
     static let tabs = BrowserTabAppearance()
     static let address = BrowserAddressAppearance()
+    static let animatesSidebar = true
     static let foldersAlwaysVisible = false
     static let foldersShowTabCounts = true
     static let foldersShowBorders = true
@@ -34,6 +35,7 @@ enum BrowserLookAndFeelDefaults {
         appearance.cornerRadius = cornerRadius
         appearance.tabs = tabs
         appearance.address = address
+        appearance.animatesSidebar = animatesSidebar
 
         chrome.set(windowBorderWidth, forKey: BrowserChromeAppearancePreference.borderWidthKey)
         chrome.set(sidebarOnRight, forKey: BrowserChromeAppearancePreference.sidebarOnRightKey)

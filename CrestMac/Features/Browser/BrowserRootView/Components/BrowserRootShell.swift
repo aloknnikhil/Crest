@@ -18,6 +18,11 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
 
     private var sidebarEdge: HorizontalEdge { appearance.sidebarEdge(in: layoutDirection) }
 
+    /// The sidebar's motion, unless Look and Feel turns it off.
+    private func sidebarAnimation(_ animation: Animation) -> Animation? {
+        BrowserDeviceAppearanceStore.shared.animatesSidebar ? chromeAnimation(animation) : nil
+    }
+
     var body: some View {
         ZStack(alignment: .leading) {
             BrowserRootFullscreenContent(pages: model.pages) {
@@ -69,7 +74,7 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
         )
         .animation(chromeAnimation(CrestMotion.collection), value: appearance.sidebarOnRight)
         .animation(
-            chromeAnimation(
+            sidebarAnimation(
                 model.isSidebarApproachingDock
                     ? CrestMotion.sidebarDockAttachment
                     : CrestMotion.sidebarMorph
@@ -77,7 +82,7 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
             value: model.chrome.columnVisibility
         )
         .animation(
-            chromeAnimation(
+            sidebarAnimation(
                 model.isSidebarApproachingDock
                     ? CrestMotion.sidebarDockAttachment
                     : model.isSidebarMorphing
@@ -87,7 +92,7 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
             value: model.isFloatingSidebarPresented
         )
         .animation(
-            chromeAnimation(CrestMotion.sidebarDockApproach),
+            sidebarAnimation(CrestMotion.sidebarDockApproach),
             value: model.isSidebarApproachingDock
         )
         .animation(

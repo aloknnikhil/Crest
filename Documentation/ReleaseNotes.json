@@ -3873,6 +3873,10 @@
     "page-shortcut-second-press": {
       "category": "improved",
       "message": "When a page keeps one of Crest's shortcuts for itself, such as Command-S in Google Docs, Crest offers it on a second press: press it again to run Crest's command instead."
+    },
+    "sidebar-animation-setting": {
+      "category": "new",
+      "message": "Look and Feel's Animations section can turn off the sidebar's slide, so it shows and hides at once."
     }
   }
 }

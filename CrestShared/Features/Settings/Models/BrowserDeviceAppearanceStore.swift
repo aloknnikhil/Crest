@@ -80,6 +80,7 @@ final class BrowserDeviceAppearanceStore {
     static let tabsKey = "crest.appearance.tabs"
     static let addressKey = "crest.appearance.address"
     static let cornerRadiusKey = "crest.appearance.cornerRadius"
+    static let animatesSidebarKey = "crest.appearance.animatesSidebar"
     static let maximumCornerRadius: Double = 40
     var cornerRadius: Double {
         didSet { defaults.set(sidebarCornerRadius, forKey: Self.cornerRadiusKey) }
@@ -95,6 +96,9 @@ final class BrowserDeviceAppearanceStore {
     @ObservationIgnored private let defaults: UserDefaults
     var tabs: BrowserTabAppearance { didSet { save(tabs, key: Self.tabsKey) } }
     var address: BrowserAddressAppearance { didSet { save(address, key: Self.addressKey) } }
+    /// Whether the sidebar slides as it shows and hides, rather than appearing
+    /// and leaving at once.
+    var animatesSidebar: Bool { didSet { defaults.set(animatesSidebar, forKey: Self.animatesSidebarKey) } }
 
     init(defaults: UserDefaults) {
         self.defaults = defaults
@@ -121,6 +125,8 @@ final class BrowserDeviceAppearanceStore {
             defaults.data(forKey: Self.addressKey).flatMap {
                 try? JSONDecoder().decode(BrowserAddressAppearance.self, from: $0)
             } ?? .init()
+        animatesSidebar =
+            defaults.object(forKey: Self.animatesSidebarKey) as? Bool ?? BrowserLookAndFeelDefaults.animatesSidebar
     }
 
     private func save(_ value: some Encodable, key: String) {

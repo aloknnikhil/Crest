@@ -10,6 +10,10 @@ struct BrowserAnimationAppearanceGroup: View {
                 Toggle("Command palette", isOn: paletteMorph.binding)
                     .labelsHidden()
             }
+            CrestSettingRow("Sidebar", setting: sidebar.resettable("Sidebar")) {
+                Toggle("Sidebar", isOn: sidebar.binding)
+                    .labelsHidden()
+            }
         }
     }
 
@@ -19,7 +23,11 @@ struct BrowserAnimationAppearanceGroup: View {
             default: BrowserLookAndFeelDefaults.address.animatesIntoCommandPalette)
     }
 
+    private var sidebar: CrestSettingValue<Bool> {
+        CrestSettingValue($appearance.animatesSidebar, default: BrowserLookAndFeelDefaults.animatesSidebar)
+    }
+
     private var settings: [CrestResettableSetting] {
-        [paletteMorph.resettable("Command palette")]
+        [paletteMorph.resettable("Command palette"), sidebar.resettable("Sidebar")]
     }
 }
