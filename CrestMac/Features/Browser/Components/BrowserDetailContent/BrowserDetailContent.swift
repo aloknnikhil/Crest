@@ -15,7 +15,7 @@ struct BrowserDetailContent: View {
     let startPageFocusRequest: Int
     let isCommandPalettePresented: Bool
     /// The window's commands, for the Start Page's palette.
-    let commands: BrowserCommandPaletteCommandRegistry
+    let commands: () -> BrowserCommandPaletteCommandRegistry
 
     var body: some View {
         if let tab, let space, !spaceAccess.isLocked(space), pages.isMirroringPage(for: tab.id) {

@@ -88,8 +88,10 @@ struct BrowserSplitPageSurface: View {
                         model.chrome.startPageFocusRequest,
                     isCommandPalettePresented:
                         model.chrome.isCommandPalettePresented,
-                    commands: model.paletteRegistry(
-                        windows: windows, layoutDirection: layoutDirection, shortcuts: shortcuts),
+                    commands: {
+                        model.paletteRegistry(
+                            windows: windows, layoutDirection: layoutDirection, shortcuts: shortcuts)
+                    },
                     cardFrames: cardFrames,
                     focusesOnHover: { focusesOnHover(member.id) },
                     onFocusRequest: { if isSelectedSpace { model.focusSplitCard(member.id) } }

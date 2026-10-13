@@ -12,6 +12,9 @@ struct BrowserLinkHoverState {
     private var candidate: BrowserLinkHoverDestination?
     private var appearanceDeadline = 0.0
 
+    /// Whether a preview is showing or waiting to appear.
+    var isActive: Bool { candidate != nil || destination != nil }
+
     @discardableResult
     mutating func receive(document: String, sequence: Int, href: String?, at now: TimeInterval) -> Int {
         invalidate()

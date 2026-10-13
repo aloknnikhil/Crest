@@ -64,6 +64,7 @@ final class BrowserCommandPaletteModel {
     @ObservationIgnored private var sequence = 0
     /// The keystroke whose answer the rows show.
     @ObservationIgnored private var shownSequence = 0
+    @ObservationIgnored private var hasRestingAnswer = false
     @ObservationIgnored private var answerTask: Task<Void, Never>?
     /// A key pressed before the answer to what was typed arrived, and the
     /// wait that runs it on the rows already shown.
@@ -167,7 +168,8 @@ final class BrowserCommandPaletteModel {
         dismiss: @escaping () -> Void,
         emptySelectionActions: BrowserEmptySelectionPaletteActions? = nil,
         openings: [BrowserCommandPaletteOpening] = [.here],
-        readPasteboard: () -> String? = { nil }
+        readPasteboard: () -> String? = { nil },
+        answersOnCreation: Bool = true
     ) {
         self.browser = browser
         self.space = space
@@ -185,9 +187,19 @@ final class BrowserCommandPaletteModel {
         self.openings = openings
         openedWith = initialQuery
         pasteboard = BrowserAppPreferenceStore.shared.preferences.palette.offers(.pasteAndGo) ? readPasteboard() : nil
-        // The palette opens with its rows: the resting answer is quick to
-        // rank, so it is asked for on the main thread.
-        if let answer = try? browser.core.query(question(for: initialQuery)) { show(answer, for: sequence) }
+        if answersOnCreation { showRestingAnswer() }
+    }
+
+    // MARK: - Actions - Resting answer
+
+    /// Ranks the rows the palette opens with, once. The resting answer is
+    /// quick to rank, so it is asked for on the main thread. A view defers
+    /// this to its appearance: SwiftUI builds a model each time the view's
+    /// parent renders and keeps only the first.
+    func showRestingAnswer() {
+        guard !hasRestingAnswer else { return }
+        hasRestingAnswer = true
+        if let answer = try? browser.core.query(question(for: query)) { show(answer, for: sequence) }
     }
 
     // MARK: - Actions - Completion

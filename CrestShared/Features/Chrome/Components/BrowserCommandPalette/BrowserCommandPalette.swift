@@ -54,7 +54,8 @@ struct BrowserCommandPalette: View {
                 dismiss: dismiss,
                 emptySelectionActions: emptySelectionActions,
                 openings: openings,
-                readPasteboard: readPasteboard
+                readPasteboard: readPasteboard,
+                answersOnCreation: false
             ))
     }
 
@@ -69,6 +70,7 @@ struct BrowserCommandPalette: View {
         .onChange(of: model.isCompletionSourceAvailable) { _, available in
             if !available { model.invalidateURLCompletion() }
         }
+        .onAppear { model.showRestingAnswer() }
         .onDisappear { model.invalidateURLCompletion() }
     }
 }

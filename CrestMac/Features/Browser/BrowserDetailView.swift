@@ -9,7 +9,7 @@ struct BrowserDetailView: View {
     let startPageFocusRequest: Int
     let isCommandPalettePresented: Bool
     /// The window's commands, for the Start Page's palette.
-    let commands: BrowserCommandPaletteCommandRegistry
+    let commands: () -> BrowserCommandPaletteCommandRegistry
     var previewsStartPage = false
 
     var body: some View {

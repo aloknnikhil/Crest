@@ -3865,6 +3865,10 @@
     "new-tab-shortcut-closes-palette": {
       "category": "fixed",
       "message": "Pressing Command-T again closes the new tab palette."
+    },
+    "lighter-window-interactions": {
+      "category": "improved",
+      "message": "Moving the pointer over pages, switching tabs and opening the command palette take less work, so the window stays more responsive."
     }
   }
 }

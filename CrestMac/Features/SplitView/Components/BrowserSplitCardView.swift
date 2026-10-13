@@ -40,7 +40,7 @@ struct BrowserSplitCardView: View {
     let startPageFocusRequest: Int
     let isCommandPalettePresented: Bool
     /// The window's commands, for a Start Page card's palette.
-    let commands: BrowserCommandPaletteCommandRegistry
+    let commands: () -> BrowserCommandPaletteCommandRegistry
     /// Where this card records its bounds for the surface's click monitor.
     let cardFrames: BrowserSplitCardFrameRegistry
     /// Asked when the pointer enters the card, never during layout, so the guards

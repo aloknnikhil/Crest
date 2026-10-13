@@ -161,8 +161,10 @@ struct BrowserRootPageSurface: View, @MainActor Equatable {
                                 model.chrome.startPageFocusRequest,
                             isCommandPalettePresented:
                                 model.chrome.isCommandPalettePresented,
-                            commands: model.paletteRegistry(
-                                windows: windows, layoutDirection: layoutDirection, shortcuts: shortcuts),
+                            commands: {
+                                model.paletteRegistry(
+                                    windows: windows, layoutDirection: layoutDirection, shortcuts: shortcuts)
+                            },
                             previewsStartPage: previewsStartPage
                         )
                     }

@@ -50,7 +50,9 @@ final class BrowserLinkHoverController {
         ) { [weak self] event in
             MainActor.assumeIsolated {
                 guard let self else { return }
-                if event.type != .mouseMoved || !self.canPresent {
+                // A pointer moving with nothing shown or pending has nothing
+                // to retire, so it skips the window hit test in canPresent.
+                if event.type != .mouseMoved || (self.isActive && !self.canPresent) {
                     self.invalidate()
                 }
             }
@@ -214,6 +216,10 @@ final class BrowserLinkHoverController {
             in: frame, contentWorld: BrowserLinkHoverContentBridge.world
         )
         return result as? Bool == true
+    }
+
+    private var isActive: Bool {
+        state.isActive || work != nil || retireSource != nil
     }
 
     private var canPresent: Bool {
