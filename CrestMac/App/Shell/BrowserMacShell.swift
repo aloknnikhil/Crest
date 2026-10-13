@@ -46,6 +46,8 @@ final class BrowserMacShell {
     /// Takes a mouse's Back and Forward clicks whole in every window, ahead of
     /// any view.
     private let mouseButtons = BrowserMacMouseButtons()
+    /// A Crest shortcut a page saw first, which a second press runs.
+    let pageShortcutHandoff = BrowserMacPageShortcutHandoff()
 
     /// The application, once the launch built it.
     var application: BrowserMacApplication? { running?.application }

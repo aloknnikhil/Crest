@@ -24,6 +24,14 @@ struct BrowserNotice: Equatable, Hashable {
         BrowserNotice(message: label, systemImage: "textformat.size")
     }
 
+    /// A page kept a Crest shortcut; pressing it again runs Crest's command.
+    static func secondPress(of shortcut: BrowserShortcut, runs command: ShortcutCommand) -> BrowserNotice {
+        BrowserNotice(
+            message: String(localized: "Press \(shortcut.displayString) again to \(command.title())"),
+            systemImage: "keyboard"
+        )
+    }
+
     /// Long enough to read: short confirmations leave quickly, sentences stay,
     /// and one that offers an action stays longest, so the person can take it.
     var duration: Duration {

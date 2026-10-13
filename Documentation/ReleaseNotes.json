@@ -3869,6 +3869,10 @@
     "lighter-window-interactions": {
       "category": "improved",
       "message": "Moving the pointer over pages, switching tabs and opening the command palette take less work, so the window stays more responsive."
+    },
+    "page-shortcut-second-press": {
+      "category": "improved",
+      "message": "When a page keeps one of Crest's shortcuts for itself, such as Command-S in Google Docs, Crest offers it on a second press: press it again to run Crest's command instead."
     }
   }
 }

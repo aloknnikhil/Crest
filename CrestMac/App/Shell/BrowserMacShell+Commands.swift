@@ -25,7 +25,8 @@ extension BrowserMacShell {
     /// While `pageSeesFirst`, a page is still to see the key, as in other
     /// browsers: only a command the core reserves from pages, and an engine
     /// binding, run now. The page's engine hands a key the page lets go to the
-    /// menu bar, which runs the command then. Otherwise Crest's own views,
+    /// menu bar, which runs the command then; a key the page keeps runs the
+    /// command when it is pressed again soon. Otherwise Crest's own views,
     /// such as the location field or the sidebar, get every Crest shortcut
     /// before they see the key.
     func handleShortcut(_ event: NSEvent, pageSeesFirst: Bool) -> Bool {
@@ -49,7 +50,16 @@ extension BrowserMacShell {
         let context = windows.activeContext
         guard context != nil || windows.isQuickWindowKey else { return false }
         if let command = application.shortcuts.command(for: event, isEnabled: canPerform) {
-            guard command.isReservedFromPages || !pageSeesFirst else { return false }
+            if pageSeesFirst, !command.isReservedFromPages {
+                // The page sees the key first; a second press of a key it kept
+                // is Crest's.
+                let takesPress = pageShortcutHandoff.takesPress(
+                    of: command, shortcut: shortcut, event: event
+                ) { [weak self] notice in
+                    self?.windows?.activeContext?.chrome.showNotice(notice)
+                }
+                guard takesPress else { return false }
+            }
             perform(command)
             return true
         }
