@@ -11,6 +11,16 @@ import SwiftUI
 @MainActor
 @Observable
 final class BrowserCommandPaletteModel {
+    // MARK: - Types
+
+    /// The site a result opens, for its icon, and whether that icon may be
+    /// asked of the site itself.
+    struct Site: Equatable {
+        let pageURL: URL
+        let profileID: UUID
+        let fetchesIcon: Bool
+    }
+
     // MARK: - Static Variables
 
     /// How long Return, Tab or Down wait for the answer to what was typed
@@ -473,6 +483,31 @@ final class BrowserCommandPaletteModel {
     /// The search provider a row searches with, for its icon.
     func searchProvider(for row: PaletteRow) -> SearchProvider? {
         row.provider
+    }
+
+    /// The site a row opens when it is not one of this Space's tabs, for its
+    /// icon: a history, saved or archived result, or a typed address.
+    func site(for row: PaletteRow) -> Site? {
+        guard let address = row.address, let pageURL = URL(string: address),
+            BrowserSiteIconCache.Key.host(of: pageURL) != nil, let profileID = space?.profileID
+        else { return nil }
+        // An address still being typed may name a host that does not exist,
+        // so only places a person has been ask the site for its icon.
+        return Site(pageURL: pageURL, profileID: profileID, fetchesIcon: row.kind != .openAddress)
+    }
+
+    /// The icon a tab of `profileID` already wears for `host`, from any Space.
+    func tabIcon(host: String, profileID: UUID) -> Data? {
+        let favicons = browser.core.state.favicons
+        for space in browser.spaceModels where space.profileID == profileID {
+            for tab in space.tabs.models where tab.iconMode.showsFavicon {
+                guard let address = tab.address, BrowserSiteIconCache.Key.host(of: address) == host,
+                    let image = favicons.icon(of: tab.id)
+                else { continue }
+                return image.data
+            }
+        }
+        return nil
     }
 
     // MARK: - Actions - Answers

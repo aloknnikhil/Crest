@@ -4113,6 +4113,10 @@
     "lighter-tab-and-palette-switching": {
       "category": "improved",
       "message": "Switching tabs and Spaces and opening the command palette redraw far less of the window, so they respond faster."
+    },
+    "palette-site-icons": {
+      "category": "improved",
+      "message": "Command palette results for websites, such as history and saved tabs, show each site's icon, and icons seen once appear instantly afterwards."
     }
   }
 }

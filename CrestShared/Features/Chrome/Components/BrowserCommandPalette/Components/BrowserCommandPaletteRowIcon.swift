@@ -24,6 +24,8 @@ struct BrowserCommandPaletteRowIcon: View {
                     profileID: model.space?.profileID,
                     size: BrowserCommandPaletteMetrics.rowFaviconSize
                 )
+            } else if let site = model.site(for: row) {
+                BrowserCommandPaletteSiteIcon(model: model, site: site, symbol: row.symbol)
             } else {
                 Image(systemName: row.symbol)
                     .font(
