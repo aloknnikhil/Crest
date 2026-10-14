@@ -123,13 +123,13 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
 
     private var surfaceInset: CGFloat {
         usesFloatingCardAppearance
-            ? BrowserSidebarPresentationPolicy.floatingCardInset
+            ? BrowserSidebarPresentation.floatingCardInset
             : 0
     }
 
     private var surfaceCornerRadius: CGFloat {
         usesFloatingCardAppearance
-            ? BrowserSidebarPresentationPolicy.floatingCardCornerRadius
+            ? BrowserSidebarPresentation.floatingCardCornerRadius
             : 0
     }
 
@@ -139,9 +139,6 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
 
     private var hiddenOffset: CGFloat {
         guard slidesItself, presentation == .collapsed else { return 0 }
-        return BrowserChromeDirectionPolicy.leadingOffset(
-            edge == .leading ? -surfaceRegionWidth : surfaceRegionWidth,
-            layoutDirection: layoutDirection
-        )
+        return layoutDirection.leadingOffset(edge == .leading ? -surfaceRegionWidth : surfaceRegionWidth)
     }
 }

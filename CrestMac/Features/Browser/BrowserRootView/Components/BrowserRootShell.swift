@@ -136,7 +136,7 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
                 edge: sidebarEdge,
                 space: model.browser.shownSpace,
                 reduceTransparency: reduceTransparency,
-                spaces: BrowserSidebarAccessPolicy.availableSpaces(in: model.browser),
+                spaces: model.browser.availableSpaces,
                 hoverChanged: {
                     model.sidebarSurfaceHoverChanged(
                         $0,
@@ -172,7 +172,7 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
         ZStack(alignment: .leading) {
             BrowserRootBackdrop(
                 space: model.browser.shownSpace,
-                spaces: BrowserSidebarAccessPolicy.availableSpaces(in: model.browser)
+                spaces: model.browser.availableSpaces
             )
 
             // The page and sidebar land in their new places at once; their

@@ -34,7 +34,7 @@ struct BrowserSpacePageSurface: NSViewRepresentable {
             reservedRight: appearance.sidebarOnRight ? reservedWidth : 0,
             slide: context.transaction.sidebarSlide)
         view.content.update(
-            spaces: BrowserSidebarAccessPolicy.availableSpaces(in: model.browser),
+            spaces: model.browser.availableSpaces,
             selectedSpaceID: model.browser.selectedSpaceID,
             lockedSpaceIDs: model.lockedSpaceIDs,
             layoutDirection: context.environment.layoutDirection,

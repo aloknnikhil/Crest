@@ -81,6 +81,7 @@ final class BrowserDeviceAppearanceStore {
     static let addressKey = "crest.appearance.address"
     static let cornerRadiusKey = "crest.appearance.cornerRadius"
     static let animatesSidebarKey = "crest.appearance.animatesSidebar"
+    static let surfaceMaterialKey = "crest.appearance.surfaceMaterial"
     static let maximumCornerRadius: Double = 40
     var cornerRadius: Double {
         didSet { defaults.set(sidebarCornerRadius, forKey: Self.cornerRadiusKey) }
@@ -89,16 +90,16 @@ final class BrowserDeviceAppearanceStore {
         cornerRadius.isFinite
             ? min(max(cornerRadius, 0), Self.maximumCornerRadius) : BrowserLookAndFeelDefaults.cornerRadius
     }
-    /// Containers keep straight header edges, even when their child tabs are capsules.
-    func containerCornerRadius(padding: Double = 0) -> Double {
-        sidebarCornerRadius == 0 ? 0 : min(sidebarCornerRadius, 10) + padding
-    }
     @ObservationIgnored private let defaults: UserDefaults
     var tabs: BrowserTabAppearance { didSet { save(tabs, key: Self.tabsKey) } }
     var address: BrowserAddressAppearance { didSet { save(address, key: Self.addressKey) } }
     /// Whether the sidebar slides as it shows and hides, rather than appearing
     /// and leaving at once.
     var animatesSidebar: Bool { didSet { defaults.set(animatesSidebar, forKey: Self.animatesSidebarKey) } }
+    /// The material the sidebar's layers are drawn with, stored by name.
+    var surfaceMaterial: CrestSurfaceMaterial {
+        didSet { defaults.set(surfaceMaterial.name, forKey: Self.surfaceMaterialKey) }
+    }
 
     init(defaults: UserDefaults) {
         self.defaults = defaults
@@ -127,6 +128,9 @@ final class BrowserDeviceAppearanceStore {
             } ?? .init()
         animatesSidebar =
             defaults.object(forKey: Self.animatesSidebarKey) as? Bool ?? BrowserLookAndFeelDefaults.animatesSidebar
+        surfaceMaterial =
+            CrestSurfaceMaterial.named(defaults.string(forKey: Self.surfaceMaterialKey))
+            ?? BrowserLookAndFeelDefaults.surfaceMaterial
     }
 
     private func save(_ value: some Encodable, key: String) {
