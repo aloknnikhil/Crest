@@ -4101,6 +4101,10 @@
     "smooth-sidebar-slide": {
       "category": "improved",
       "message": "The sidebar slides in and out smoothly, and the page moves with it without stuttering, however many tabs and Spaces you have."
+    },
+    "smooth-sidebar-docking": {
+      "category": "improved",
+      "message": "Docking the floating sidebar, or letting it float again, fades smoothly between the two looks instead of stuttering."
     }
   }
 }

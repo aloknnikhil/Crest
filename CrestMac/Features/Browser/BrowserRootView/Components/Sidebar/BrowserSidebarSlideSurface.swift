@@ -43,34 +43,23 @@ struct BrowserSidebarSlideSurface<Content: View>: NSViewRepresentable {
     }
 
     func updateNSView(_ view: BrowserSidebarSlideView<BrowserSidebarSlideRoot<Content>>, context: Context) {
-        let slide = context.transaction.sidebarSlide
-        // A show or hide moves the whole sidebar; animating its content too
-        // would lay every row out again each frame of the slide.
-        let staysShown = view.showsSidebar == presentation.showsSidebar
         view.update(
-            root: BrowserSidebarSlideRoot(
-                content: content, presentation: presentation, edge: edge,
-                animation: staysShown ? slide?.animation : nil, objects: pageEnvironment.objects),
-            showsSidebar: presentation.showsSidebar,
+            root: BrowserSidebarSlideRoot(content: content, edge: edge, objects: pageEnvironment.objects),
+            presentation: presentation,
             offset: hidesTowardRight ? travel : -travel,
-            slide: slide)
+            slide: context.transaction.sidebarSlide)
     }
 }
 
 /// The sidebar's content as its own hosting view shows it.
 struct BrowserSidebarSlideRoot<Content: View>: View {
     let content: Content
-    let presentation: BrowserSidebarPresentation
     let edge: HorizontalEdge
-    /// Carries a change between docked and floating across the content, which
-    /// no longer hears the shell's animations.
-    var animation: Animation?
     let objects: SpacePageObjects
 
     var body: some View {
         content
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: edge == .leading ? .leading : .trailing)
-            .animation(animation, value: presentation)
             .spacePageObjects(objects)
     }
 }
@@ -80,13 +69,15 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
     // MARK: - Static Variables
 
     private static var slideKey: String { "sidebarSlide" }
+    private static var restyleKey: String { "sidebarRestyle" }
 
     // MARK: - Variables
 
     private var hostingView: NSHostingView<Root>?
     /// The content a hide puts in once the sidebar has left.
     private var pendingRoot: Root?
-    private(set) var showsSidebar = true
+    private var presentation: BrowserSidebarPresentation?
+    private var showsSidebar: Bool { presentation?.showsSidebar ?? true }
     private var slideGeneration: UInt = 0
 
     // MARK: - Initializers
@@ -107,18 +98,27 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
 
     // MARK: - Actions - Presentation
 
-    func update(root: Root, showsSidebar: Bool, offset: CGFloat, slide: BrowserSidebarSlide?) {
-        guard let hostingView else {
+    func update(
+        root: Root, presentation: BrowserSidebarPresentation, offset: CGFloat, slide: BrowserSidebarSlide?
+    ) {
+        let previous = self.presentation
+        self.presentation = presentation
+        let showsSidebar = presentation.showsSidebar
+        guard let hostingView, let previous else {
             install(root)
-            self.showsSidebar = showsSidebar
             self.hostingView?.isHidden = !showsSidebar
             return
         }
-        guard showsSidebar != self.showsSidebar else {
-            if pendingRoot != nil { pendingRoot = root } else { hostingView.rootView = root }
+        guard showsSidebar != previous.showsSidebar else {
+            if pendingRoot != nil {
+                pendingRoot = root
+            } else if presentation != previous, let slide, window != nil {
+                restyle(hostingView, to: root, over: slide)
+            } else {
+                hostingView.rootView = root
+            }
             return
         }
-        self.showsSidebar = showsSidebar
         guard let slide, window != nil, let layer else {
             stopSliding()
             hostingView.rootView = root
@@ -159,6 +159,21 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
     }
 
     // MARK: - Mutators
+
+    /// Moves a shown sidebar between docked and floating. The content lands in
+    /// its new style at once and Core Animation fades between the two, since
+    /// animating the style itself would lay every row out again each frame.
+    private func restyle(_ hostingView: NSHostingView<Root>, to root: Root, over slide: BrowserSidebarSlide) {
+        let fade = CATransition()
+        fade.type = .fade
+        fade.duration = slide.duration
+        fade.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        CATransaction.begin()
+        layer?.add(fade, forKey: Self.restyleKey)
+        hostingView.rootView = root
+        hostingView.layoutSubtreeIfNeeded()
+        CATransaction.commit()
+    }
 
     private func install(_ root: Root) {
         let hostingView = NSHostingView(rootView: root)
