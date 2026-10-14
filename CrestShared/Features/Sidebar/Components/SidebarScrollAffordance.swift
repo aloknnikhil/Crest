@@ -150,7 +150,9 @@ private struct SidebarScrollIndicator: View {
                             width: CrestLayout.glassIconButtonDiameter / 2,
                             height: CrestLayout.glassIconButtonDiameter / 2
                         )
-                        .glassEffect(.regular.interactive(), in: .circle)
+                        // Interactive glass tracks the pointer every frame, so it
+                        // answers only while the button is there to press.
+                        .glassEffect(.regular.interactive(showsBubble), in: .circle)
                         .frame(
                             width: CrestLayout.minimumHitTarget, height: CrestLayout.minimumHitTarget,
                             alignment: .bottom

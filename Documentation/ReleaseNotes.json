@@ -4129,6 +4129,10 @@
     "sidebar-keeps-content-hidden": {
       "category": "improved",
       "message": "Showing the sidebar again and scrolling or swiping with the trackpad over it take less work, so both stay smooth."
+    },
+    "scroll-button-glass-idle": {
+      "category": "internal",
+      "message": "Give the sidebar's scroll button interactive glass only while it shows"
     }
   }
 }
