@@ -153,6 +153,14 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
+        // A pointer move asks only whether the sidebar is under the pointer,
+        // for the window's hover; the sidebar's own host tracks hover inside
+        // it. Walking every row here on every move cost more than anything
+        // else the window did.
+        if NSApp.currentEvent?.type == .mouseMoved, let hostingView {
+            guard !hostingView.isHidden, frame.contains(point) else { return nil }
+            return self
+        }
         // The region around a hidden or narrower sidebar belongs to the page.
         let view = super.hitTest(point)
         return view === self ? nil : view

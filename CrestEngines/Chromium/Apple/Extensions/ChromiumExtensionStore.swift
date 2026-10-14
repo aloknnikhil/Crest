@@ -28,7 +28,18 @@ final class ChromiumExtensionStore {
             options = item.optionsURL ?? ""
         }
     }
+    /// What a pinned row asked of the engine.
+    private struct PinnedQuestion: Hashable {
+        let profileID: UUID
+        let pageID: UUID?
+        let pageIsCreated: Bool
+    }
     var revision = 0
+    /// Each Space row's pinned actions as the engine last answered them, kept
+    /// until the next change the engine reports. A row's body runs on every
+    /// tab switch, and asking the engine twice each time was its whole cost.
+    @ObservationIgnored private var pinnedAnswers: [PinnedQuestion: [BrowserExtensionActionPresentation]] = [:]
+    @ObservationIgnored private var pinnedAnswersRevision = 0
     private(set) var installed: [UUID: [Installed]] = [:]
     private(set) var installation: ChromiumExtensionInstallation?
     /// The extensions an import brought that still await their install review.
@@ -62,12 +73,20 @@ final class ChromiumExtensionStore {
         guard ChromiumComposition.ownsExtensionProfiles(browser) else { return false }
         return browser.spaceModel(matching: space.assignment) != nil
     }
-    func refresh() {
+    /// Reads again what each loaded profile has installed, or only `profileID`'s
+    /// when the engine names the profile that changed. Action updates such as
+    /// badges arrive this way on every tab switch, so each profile is asked
+    /// once, however many Spaces share it.
+    func refresh(_ profileID: UUID? = nil) {
         revision &+= 1
         guard ChromiumComposition.chromiumEngine != nil else { return }
         let profiles = Set(spaces.map { $0.profileID })
         installed = installed.filter { profiles.contains($0.key) }
-        for space in spaces where installed[space.profileID] != nil {
+        var asked: Set<UUID> = []
+        for space in spaces
+        where installed[space.profileID] != nil && (profileID ?? space.profileID) == space.profileID
+            && asked.insert(space.profileID).inserted
+        {
             installed[space.profileID] = Self.installed(in: space)
         }
     }
@@ -99,14 +118,21 @@ final class ChromiumExtensionStore {
     func pinnedActions(
         for space: BrowserSpaceIdentity, page: ChromiumNativePage?
     ) -> [BrowserExtensionActionPresentation] {
-        _ = revision
         guard ChromiumComposition.engineHost != nil, let pages = ChromiumComposition.chromiumEngine?.pages else {
+            _ = revision
             return []
         }
+        if pinnedAnswersRevision != revision {
+            pinnedAnswers.removeAll()
+            pinnedAnswersRevision = revision
+        }
+        let question = PinnedQuestion(
+            profileID: space.profileID, pageID: page?.pageID, pageIsCreated: page?.isCreated ?? false)
+        if let answer = pinnedAnswers[question] { return answer }
         let live = Dictionary(
             page?.extensions.map { ($0.id, $0) } ?? [],
             uniquingKeysWith: { first, _ in first })
-        return pages.request(PinnedExtensions(profileID: space.profileID)).actions
+        let answer = pages.request(PinnedExtensions(profileID: space.profileID)).actions
             .map { action -> BrowserExtensionActionPresentation in
                 if let tab = live[action.id] {
                     return BrowserExtensionActionPresentation(
@@ -116,6 +142,8 @@ final class ChromiumExtensionStore {
                 return BrowserExtensionActionPresentation(action)
             }
             .sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
+        pinnedAnswers[question] = answer
+        return answer
     }
     /// Runs a pinned action from a Space with no page open. Only an action with
     /// its own popup can run without one, so anything else states itself as

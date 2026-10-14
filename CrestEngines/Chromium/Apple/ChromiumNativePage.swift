@@ -32,6 +32,8 @@
         weak var linkDrag: BrowserLinkDragController?
         private var host: (any CrestMacShell)? { engine?.host }
         private var created = false
+        /// Whether the engine has made the page, so it can answer for its tab.
+        var isCreated: Bool { created }
         /// Whether the engine shows the page now, as this page last asked it
         /// to, so a surface that joins its window and its host at once, or a
         /// host told twice, asks once.

@@ -4105,6 +4105,10 @@
     "smooth-sidebar-docking": {
       "category": "improved",
       "message": "Docking the floating sidebar, or letting it float again, fades smoothly between the two looks instead of stuttering."
+    },
+    "lighter-pointer-and-extension-work": {
+      "category": "improved",
+      "message": "Moving the pointer, switching tabs and pages updating their extension badges take much less work, so the window stays responsive with many tabs and extensions."
     }
   }
 }
