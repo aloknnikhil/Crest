@@ -160,7 +160,8 @@ internal static class SwiftEmitter {
 
         var observed = schema.Records.Where(record => record.IsObserved).ToList();
         if (observed.Count > 0) code.Append("\n// MARK: - Observed models\n");
-        foreach (var record in observed) EmitModel(code, record, equatable);
+        var nestable = observed.Where(record => !record.IsIdentified).Select(record => record.Type).ToHashSet();
+        foreach (var record in observed) EmitModel(code, record, equatable, nestable);
         return code.ToString();
     }
 
@@ -227,21 +228,30 @@ internal static class SwiftEmitter {
     /// there reads the new value instead of keeping the old one; and an equal
     /// value notifies no observer whatever the Observation runtime does with
     /// equal writes. The identity is fixed.
-    private static void EmitModel(StringBuilder code, ContractRecord record, HashSet<Type> equatable) {
+    ///
+    /// A field whose record is itself observed, and has no identity of its own,
+    /// becomes that record's model, made once and updated in place, so a view
+    /// reading one of its fields observes that field alone rather than the
+    /// whole record.
+    private static void EmitModel(StringBuilder code, ContractRecord record, HashSet<Type> equatable, HashSet<Type> nestable) {
         if (!equatable.Contains(record.Type))
             throw new ContractSchemaException($"{record.Name}: an [Observed] record compares its fields, so none may hold an intent or a query.");
         string model = $"{record.Name}Model";
         var labels = InitializerLabels(record);
         var fields = record.Wire.Select((field, index) => (Label: labels[index], Name: Local(field.Name),
             Storage: $"{Naming.SwiftMember(field.Name)}{ObservedStorageSuffix}", Type: TypeName(field.Type),
-            IsIdentity: field.Name == ContractRecord.IdentityField)).ToList();
-        var observed = fields.Where(field => !field.IsIdentity).ToList();
+            IsIdentity: field.Name == ContractRecord.IdentityField,
+            Nested: field.Type is RecordField nested && nestable.Contains(nested.Type) ? $"{TypeName(field.Type)}Model" : null))
+            .ToList();
+        var children = fields.Where(field => field.Nested != null).ToList();
+        var observed = fields.Where(field => !field.IsIdentity && field.Nested == null).ToList();
         code.Append('\n').Append($"/// `{record.Name}` as an object views observe field by field. `update` stores each\n");
         code.Append("/// field that differs before it announces the change, and announces nothing for a\n");
         code.Append("/// field that keeps its value.\n");
         code.Append("@MainActor\n@Observable\n");
         code.Append($"final class {model}: {ObservedModelProtocol}{(record.IsIdentified ? ", Identifiable" : "")} {{\n");
         foreach (var field in fields.Where(field => field.IsIdentity)) code.Append($"    let {field.Name}: {field.Type}\n");
+        foreach (var field in children) code.Append($"    let {field.Name}: {field.Nested}\n");
         foreach (var field in observed) {
             code.Append($"    var {field.Name}: {field.Type} {{\n");
             code.Append($"        access(keyPath: \\.{field.Name})\n");
@@ -251,14 +261,19 @@ internal static class SwiftEmitter {
         if (observed.Count > 0) code.Append('\n');
         foreach (var field in observed) code.Append($"    @ObservationIgnored private var {field.Storage}: {field.Type}\n");
         code.Append('\n').Append($"    var value: {record.Name} {{\n");
-        code.Append(Wrapped($"        {record.Name}(", ")", [.. fields.Select(field => $"{field.Label}: {field.Name}")])).Append('\n');
+        code.Append(Wrapped($"        {record.Name}(", ")",
+            [.. fields.Select(field => $"{field.Label}: {field.Name}{(field.Nested != null ? ".value" : "")}")])).Append('\n');
         code.Append("    }\n");
         code.Append('\n').Append($"    init(_ value: {record.Name}) {{\n");
-        foreach (var field in fields) code.Append($"        {(field.IsIdentity ? field.Name : field.Storage)} = value.{field.Name}\n");
+        foreach (var field in fields)
+            code.Append(field.Nested != null
+                ? $"        {field.Name} = {field.Nested}(value.{field.Name})\n"
+                : $"        {(field.IsIdentity ? field.Name : field.Storage)} = value.{field.Name}\n");
         code.Append("    }\n");
         code.Append('\n').Append($"    func update(_ value: {record.Name}) {{\n");
         foreach (var field in fields.Where(field => field.IsIdentity))
             code.Append($"        precondition(value.{field.Name} == {field.Name}, \"A {model} takes only its own {record.Name}'s values.\")\n");
+        foreach (var field in children) code.Append($"        {field.Name}.update(value.{field.Name})\n");
         foreach (var field in observed) {
             code.Append($"        if {field.Storage} != value.{field.Name} {{\n");
             code.Append($"            {field.Storage} = value.{field.Name}\n");

@@ -6,6 +6,9 @@ namespace CrestCore.Contracts;
 /// page is asked to load again or to leave the failure, so an engine that
 /// retries on its own keeps showing it. A failure over the document the page
 /// still shows lets the page go back to that document. Never saved or synced.
+/// Observed field by field: a page's title changes far more often than its
+/// back and forward buttons, and a view reading one need not redraw for the other.
+[Observed]
 public sealed record PageLiveState(string? Url, string? PendingUrl, string Title, bool IsLoading, bool CanGoBack,
     bool CanGoForward, PageSecurity Security, PageFailure? Failure, PageMediaActivity Media) {
     #region Static Variables

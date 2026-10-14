@@ -40,7 +40,7 @@ final class MobileBrowserPage: NSObject, BrowserMediaSessionCommandEndpoint {
     /// What the page shows as the core holds it: its address, title,
     /// loading, history, security, failure and media. Presentation that
     /// changes constantly, such as progress, find and zoom, stays here.
-    var live: PageLiveState { corePage.live }
+    var live: PageLiveStateModel { corePage.live }
     private(set) var estimatedProgress = 0.0
     private(set) var faviconData: Data?
     private(set) var themeColor: UIColor?
@@ -728,7 +728,7 @@ final class MobileBrowserPage: NSObject, BrowserMediaSessionCommandEndpoint {
 
     func exportPDF(to destination: MobileBrowserFileExportDestination) {
         guard webView.url != nil else { return }
-        let suggestedFilename = live.suggestedFilename(pathExtension: "pdf")
+        let suggestedFilename = live.value.suggestedFilename(pathExtension: "pdf")
         Task { [weak self] in
             guard let self else { return }
             do {
@@ -758,7 +758,7 @@ final class MobileBrowserPage: NSObject, BrowserMediaSessionCommandEndpoint {
 
     func exportWebArchive(to destination: MobileBrowserFileExportDestination) {
         guard webView.url != nil else { return }
-        let suggestedFilename = live.suggestedFilename(
+        let suggestedFilename = live.value.suggestedFilename(
             pathExtension: BrowserPageArchiveFormat.webArchive.pathExtension)
         Task { [weak self] in
             guard let self else { return }

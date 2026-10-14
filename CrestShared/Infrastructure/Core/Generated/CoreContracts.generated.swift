@@ -22882,6 +22882,136 @@ final class FolderStateModel: ObservedModel, Identifiable {
     }
 }
 
+/// `PageLiveState` as an object views observe field by field. `update` stores each
+/// field that differs before it announces the change, and announces nothing for a
+/// field that keeps its value.
+@MainActor
+@Observable
+final class PageLiveStateModel: ObservedModel {
+    var url: String? {
+        access(keyPath: \.url)
+        return urlStorage
+    }
+    var pendingURL: String? {
+        access(keyPath: \.pendingURL)
+        return pendingURLStorage
+    }
+    var title: String {
+        access(keyPath: \.title)
+        return titleStorage
+    }
+    var isLoading: Bool {
+        access(keyPath: \.isLoading)
+        return isLoadingStorage
+    }
+    var canGoBack: Bool {
+        access(keyPath: \.canGoBack)
+        return canGoBackStorage
+    }
+    var canGoForward: Bool {
+        access(keyPath: \.canGoForward)
+        return canGoForwardStorage
+    }
+    var security: PageSecurity {
+        access(keyPath: \.security)
+        return securityStorage
+    }
+    var failure: PageFailure? {
+        access(keyPath: \.failure)
+        return failureStorage
+    }
+    var media: PageMediaActivity {
+        access(keyPath: \.media)
+        return mediaStorage
+    }
+    var address: String? {
+        access(keyPath: \.address)
+        return addressStorage
+    }
+
+    @ObservationIgnored private var urlStorage: String?
+    @ObservationIgnored private var pendingURLStorage: String?
+    @ObservationIgnored private var titleStorage: String
+    @ObservationIgnored private var isLoadingStorage: Bool
+    @ObservationIgnored private var canGoBackStorage: Bool
+    @ObservationIgnored private var canGoForwardStorage: Bool
+    @ObservationIgnored private var securityStorage: PageSecurity
+    @ObservationIgnored private var failureStorage: PageFailure?
+    @ObservationIgnored private var mediaStorage: PageMediaActivity
+    @ObservationIgnored private var addressStorage: String?
+
+    var value: PageLiveState {
+        PageLiveState(
+            url: url,
+            pendingURL: pendingURL,
+            title: title,
+            isLoading: isLoading,
+            canGoBack: canGoBack,
+            canGoForward: canGoForward,
+            security: security,
+            failure: failure,
+            media: media,
+            address: address
+        )
+    }
+
+    init(_ value: PageLiveState) {
+        urlStorage = value.url
+        pendingURLStorage = value.pendingURL
+        titleStorage = value.title
+        isLoadingStorage = value.isLoading
+        canGoBackStorage = value.canGoBack
+        canGoForwardStorage = value.canGoForward
+        securityStorage = value.security
+        failureStorage = value.failure
+        mediaStorage = value.media
+        addressStorage = value.address
+    }
+
+    func update(_ value: PageLiveState) {
+        if urlStorage != value.url {
+            urlStorage = value.url
+            withMutation(keyPath: \.url) {}
+        }
+        if pendingURLStorage != value.pendingURL {
+            pendingURLStorage = value.pendingURL
+            withMutation(keyPath: \.pendingURL) {}
+        }
+        if titleStorage != value.title {
+            titleStorage = value.title
+            withMutation(keyPath: \.title) {}
+        }
+        if isLoadingStorage != value.isLoading {
+            isLoadingStorage = value.isLoading
+            withMutation(keyPath: \.isLoading) {}
+        }
+        if canGoBackStorage != value.canGoBack {
+            canGoBackStorage = value.canGoBack
+            withMutation(keyPath: \.canGoBack) {}
+        }
+        if canGoForwardStorage != value.canGoForward {
+            canGoForwardStorage = value.canGoForward
+            withMutation(keyPath: \.canGoForward) {}
+        }
+        if securityStorage != value.security {
+            securityStorage = value.security
+            withMutation(keyPath: \.security) {}
+        }
+        if failureStorage != value.failure {
+            failureStorage = value.failure
+            withMutation(keyPath: \.failure) {}
+        }
+        if mediaStorage != value.media {
+            mediaStorage = value.media
+            withMutation(keyPath: \.media) {}
+        }
+        if addressStorage != value.address {
+            addressStorage = value.address
+            withMutation(keyPath: \.address) {}
+        }
+    }
+}
+
 /// `PageState` as an object views observe field by field. `update` stores each
 /// field that differs before it announces the change, and announces nothing for a
 /// field that keeps its value.
@@ -22889,6 +23019,7 @@ final class FolderStateModel: ObservedModel, Identifiable {
 @Observable
 final class PageStateModel: ObservedModel, Identifiable {
     let id: UUID
+    let live: PageLiveStateModel
     var workspaceID: UUID {
         access(keyPath: \.workspaceID)
         return workspaceIDStorage
@@ -22909,17 +23040,12 @@ final class PageStateModel: ObservedModel, Identifiable {
         access(keyPath: \.phase)
         return phaseStorage
     }
-    var live: PageLiveState {
-        access(keyPath: \.live)
-        return liveStorage
-    }
 
     @ObservationIgnored private var workspaceIDStorage: UUID
     @ObservationIgnored private var spaceIDStorage: UUID
     @ObservationIgnored private var tabIDStorage: UUID?
     @ObservationIgnored private var engineStorage: EngineKind
     @ObservationIgnored private var phaseStorage: PagePhase
-    @ObservationIgnored private var liveStorage: PageLiveState
 
     var value: PageState {
         PageState(
@@ -22929,7 +23055,7 @@ final class PageStateModel: ObservedModel, Identifiable {
             tabID: tabID,
             engine: engine,
             phase: phase,
-            live: live
+            live: live.value
         )
     }
 
@@ -22940,11 +23066,12 @@ final class PageStateModel: ObservedModel, Identifiable {
         tabIDStorage = value.tabID
         engineStorage = value.engine
         phaseStorage = value.phase
-        liveStorage = value.live
+        live = PageLiveStateModel(value.live)
     }
 
     func update(_ value: PageState) {
         precondition(value.id == id, "A PageStateModel takes only its own PageState's values.")
+        live.update(value.live)
         if workspaceIDStorage != value.workspaceID {
             workspaceIDStorage = value.workspaceID
             withMutation(keyPath: \.workspaceID) {}
@@ -22964,10 +23091,6 @@ final class PageStateModel: ObservedModel, Identifiable {
         if phaseStorage != value.phase {
             phaseStorage = value.phase
             withMutation(keyPath: \.phase) {}
-        }
-        if liveStorage != value.live {
-            liveStorage = value.live
-            withMutation(keyPath: \.live) {}
         }
     }
 }

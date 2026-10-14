@@ -4117,6 +4117,10 @@
     "palette-site-icons": {
       "category": "improved",
       "message": "Command palette results for websites, such as history and saved tabs, show each site's icon, and icons seen once appear instantly afterwards."
+    },
+    "page-state-observed-per-field": {
+      "category": "improved",
+      "message": "A page changing its title, address or loading state redraws only the controls that show it, so pages that update often, such as calls and media, keep the window responsive."
     }
   }
 }

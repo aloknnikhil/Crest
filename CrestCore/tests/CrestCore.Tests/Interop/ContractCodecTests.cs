@@ -317,6 +317,23 @@ public sealed unsafe class ContractCodecTests {
         Assert.Equal(ContractSchema.Load([typeof(Unwatched.Lamp), typeof(Unwatched.Dimmer)]).Fingerprint, schema.Fingerprint);
     }
 
+    /// An observed record held by another, without an identity of its own,
+    /// reaches Swift as its own model that the holder makes once and updates in
+    /// place, so a view reading one of its fields observes that field alone.
+    /// A page's live state is the case: its title changes far more often than
+    /// its back and forward buttons.
+    [Fact]
+    public void AnObservedRecordAnotherHoldsBecomesAModelItUpdatesInPlace() {
+        string swift = SwiftEmitter.EmitContracts(ContractSchema.Load([typeof(PageOpened)]));
+
+        Assert.Contains("final class PageStateModel: ObservedModel, Identifiable {\n    let id: UUID\n    let live: PageLiveStateModel\n",
+            swift, StringComparison.Ordinal);
+        Assert.Contains("        live = PageLiveStateModel(value.live)\n", swift, StringComparison.Ordinal);
+        Assert.Contains("        live.update(value.live)\n", swift, StringComparison.Ordinal);
+        Assert.Contains("            live: live.value\n", swift, StringComparison.Ordinal);
+        Assert.DoesNotContain("liveStorage", swift, StringComparison.Ordinal);
+    }
+
     /// A record the core resolves values of reaches Swift with a seed where a
     /// message the platform sends holds it: its fields alone, with seeds in
     /// them, which the message holds and encodes, so no platform works out a

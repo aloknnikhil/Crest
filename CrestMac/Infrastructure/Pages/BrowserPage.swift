@@ -56,7 +56,7 @@ final class BrowserPage: NSObject, BrowserMediaSessionCommandEndpoint {
     /// What the page shows as the core holds it: its address, title,
     /// loading, history, security, failure and media. Presentation that
     /// changes constantly, such as progress, find and zoom, stays here.
-    var live: PageLiveState { corePage.live }
+    var live: PageLiveStateModel { corePage.live }
     var estimatedProgress = 0.0
     var isContentFullscreen: Bool {
         get { observed(\.isContentFullscreenStorage, as: \.isContentFullscreen) }
@@ -659,7 +659,7 @@ final class BrowserPage: NSObject, BrowserMediaSessionCommandEndpoint {
                 let panel = NSSavePanel()
                 panel.allowedContentTypes = [.png]
                 panel.canCreateDirectories = true
-                panel.nameFieldStringValue = live.suggestedFilename(pathExtension: "png")
+                panel.nameFieldStringValue = live.value.suggestedFilename(pathExtension: "png")
                 panel.title = "Save Portrait Capture"
                 panel.prompt = "Save"
                 guard await panel.beginSheetModal(for: window) == .OK,
@@ -999,7 +999,7 @@ final class BrowserPage: NSObject, BrowserMediaSessionCommandEndpoint {
 
     func exportPDF() {
         guard let window = nativeView.window, live.url != nil else { return }
-        let suggestedFilename = live.suggestedFilename(pathExtension: "pdf")
+        let suggestedFilename = live.value.suggestedFilename(pathExtension: "pdf")
         Task { [weak self, weak window] in
             guard let self, let window else { return }
             do {
@@ -1031,7 +1031,7 @@ final class BrowserPage: NSObject, BrowserMediaSessionCommandEndpoint {
     func exportWebArchive() {
         guard let window = nativeView.window, live.url != nil else { return }
         let format = pageEngine.registration.archiveFormat
-        let suggestedFilename = live.suggestedFilename(pathExtension: format.pathExtension)
+        let suggestedFilename = live.value.suggestedFilename(pathExtension: format.pathExtension)
         Task { [weak self, weak window] in
             guard let self, let window else { return }
             do {

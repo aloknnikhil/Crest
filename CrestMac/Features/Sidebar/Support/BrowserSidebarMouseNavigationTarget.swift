@@ -11,7 +11,7 @@ protocol BrowserSidebarMouseNavigationTarget: AnyObject {
     var nativeView: NSView { get }
     /// What the page shows as the core holds it, including whether it can go
     /// back or forward.
-    var live: PageLiveState { get }
+    var live: PageLiveStateModel { get }
     func goBack()
     func goForward()
 }

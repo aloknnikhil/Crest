@@ -11,6 +11,8 @@ final class CorePage {
     // MARK: - Static Variables
 
     private static let logger = Logger(subsystem: "com.pauldavis.crest", category: "Pages")
+    /// What a page shows before the core holds it. Never updated.
+    private static let blankLive = PageLiveStateModel(.blank)
 
     // MARK: - Variables
 
@@ -29,8 +31,9 @@ final class CorePage {
 
     /// What the page shows now as the core holds it: its engine's latest
     /// report and why its latest navigation failed. Blank until the core
-    /// holds the page.
-    var live: PageLiveState { state?.live ?? .blank }
+    /// holds the page. A view reading one of its fields observes that field
+    /// alone; `value` reads them all.
+    var live: PageLiveStateModel { state?.live ?? Self.blankLive }
 
     /// The registered engines this page can move to: every one but its own.
     /// Empty before the core holds the page or while one engine is registered.
