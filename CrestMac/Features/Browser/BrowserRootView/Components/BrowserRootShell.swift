@@ -123,6 +123,51 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
         }
     }
 
+    private var sidebar: some View {
+        BrowserSidebarSlideSurface(
+            presentation: model.sidebarPresentation,
+            edge: sidebarEdge,
+            hidesTowardRight: appearance.sidebarOnRight,
+            travel: BrowserSidebarPresentation.collapsed.surfaceWidth(for: model.sidebarWidth)
+        ) {
+            BrowserRootSidebarSurfaceLayer(
+                presentation: model.sidebarPresentation,
+                width: model.sidebarWidth,
+                edge: sidebarEdge,
+                space: model.browser.shownSpace,
+                reduceTransparency: reduceTransparency,
+                spaces: BrowserSidebarAccessPolicy.availableSpaces(in: model.browser),
+                hoverChanged: {
+                    model.sidebarSurfaceHoverChanged(
+                        $0,
+                        reduceMotion: reduceMotion
+                    )
+                },
+                slidesItself: false
+            ) {
+                BrowserRootSidebarContent(
+                    model: model,
+                    spaceSettingsPresentation: spaceSettingsPresentation,
+                    commandSurfaceNamespace: commandSurfaceNamespace,
+                    tabPromotionNamespace: tabPromotionNamespace
+                )
+            }
+            .background {
+                BrowserSidebarPointerNavigation(
+                    isSidebarVisible:
+                        model.sidebarPresentation.showsSidebar
+                        && !model.chrome.isCommandPalettePresented,
+                    perform: model.handleAuxiliaryMouseAction,
+                    navigationTargets: { [pages = model.pages] in pages.livePages },
+                    activeTarget: { [pages = model.pages] in pages.activePage }
+                )
+            }
+        }
+        .frame(width: model.sidebarPresentation.surfaceWidth(for: model.sidebarWidth))
+        .frame(maxHeight: .infinity)
+        .zIndex(model.sidebarPresentation == .floating ? BrowserRootMetrics.floatingSidebarZIndex : 0)
+    }
+
     private var standardContent: some View {
         ZStack(alignment: .leading) {
             BrowserRootBackdrop(
@@ -130,55 +175,37 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
                 spaces: BrowserSidebarAccessPolicy.availableSpaces(in: model.browser)
             )
 
-            BrowserSidebarPageLayout(
-                presentation: model.sidebarPresentation,
-                width: model.sidebarWidth,
-                edge: sidebarEdge,
-                isApproachingDock: model.isSidebarApproachingDock
-            ) {
+            // The page and sidebar land in their new places at once; their
+            // AppKit views carry the slide on the render server.
+            Group {
                 BrowserSpacePageSurface(
                     model: model, transientBrowsing: transientBrowsing,
-                    tabPromotionNamespace: tabPromotionNamespace, shortcuts: shortcuts, appearance: appearance
+                    tabPromotionNamespace: tabPromotionNamespace, shortcuts: shortcuts, appearance: appearance,
+                    reservedWidth: model.sidebarPresentation.reservedWidth(
+                        for: model.sidebarWidth, whileApproachingDock: model.isSidebarApproachingDock)
                 )
                 .clipped()
-            } sidebar: {
-                BrowserRootSidebarSurfaceLayer(
+
+                BrowserSidebarPageLayout(
                     presentation: model.sidebarPresentation,
                     width: model.sidebarWidth,
                     edge: sidebarEdge,
-                    space: model.browser.shownSpace,
-                    reduceTransparency: reduceTransparency,
-                    spaces: BrowserSidebarAccessPolicy.availableSpaces(in: model.browser),
-                    hoverChanged: {
-                        model.sidebarSurfaceHoverChanged(
-                            $0,
-                            reduceMotion: reduceMotion
-                        )
-                    }
+                    isApproachingDock: model.isSidebarApproachingDock
                 ) {
-                    BrowserRootSidebarContent(
-                        model: model,
-                        spaceSettingsPresentation: spaceSettingsPresentation,
-                        commandSurfaceNamespace: commandSurfaceNamespace,
-                        tabPromotionNamespace: tabPromotionNamespace
-                    )
+                    // The page's place, which the command palette centres in.
+                    Color.clear
+                        .allowsHitTesting(false)
+                        .accessibilityHidden(true)
+                } sidebar: {
+                    sidebar
+                } controls: {
+                    BrowserRootShellControls(
+                        model: model, storedSidebarWidth: $storedSidebarWidth, sidebarEdge: sidebarEdge)
                 }
-                .background {
-                    BrowserSidebarPointerNavigation(
-                        isSidebarVisible:
-                            model.sidebarPresentation.showsSidebar
-                            && !model.chrome.isCommandPalettePresented,
-                        perform: model.handleAuxiliaryMouseAction,
-                        navigationTargets: { [pages = model.pages] in pages.livePages },
-                        activeTarget: { [pages = model.pages] in pages.activePage }
-                    )
-                }
-            } controls: {
-                BrowserRootShellControls(
-                    model: model, storedSidebarWidth: $storedSidebarWidth, sidebarEdge: sidebarEdge)
             }
             .allowsHitTesting(!model.chrome.isCommandPalettePresented)
             .accessibilityHidden(model.chrome.isCommandPalettePresented)
+            .browserSidebarSlideTransaction()
 
             BrowserRootUtilityFanLayer(model: model, sidebarOnRight: appearance.sidebarOnRight)
                 .zIndex(BrowserRootMetrics.utilityFanZIndex)

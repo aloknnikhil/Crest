@@ -3877,6 +3877,10 @@
     "sidebar-animation-setting": {
       "category": "new",
       "message": "Look and Feel's Animations section can turn off the sidebar's slide, so it shows and hides at once."
+    },
+    "smooth-sidebar-slide": {
+      "category": "improved",
+      "message": "The sidebar slides in and out smoothly, and the page moves with it without stuttering, however many tabs and Spaces you have."
     }
   }
 }

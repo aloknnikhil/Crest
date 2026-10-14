@@ -58,6 +58,12 @@ struct BrowserSidebarPresentation: Hashable, Sendable {
         reservesSidebarWidth || whileApproachingDock ? sidebarWidth : 0
     }
 
+    /// How wide the sidebar's surface is: a card stands inset in a wider region.
+    func surfaceWidth(for sidebarWidth: CGFloat) -> CGFloat {
+        self == .docked
+            ? sidebarWidth : BrowserSidebarPresentationPolicy.floatingHoverRegionWidth(sidebarWidth: sidebarWidth)
+    }
+
     // MARK: - Actions - Identity
 
     static func == (lhs: BrowserSidebarPresentation, rhs: BrowserSidebarPresentation) -> Bool {

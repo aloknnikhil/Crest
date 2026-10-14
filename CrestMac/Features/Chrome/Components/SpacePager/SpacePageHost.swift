@@ -28,13 +28,7 @@ struct SpacePageRoot<Content: View>: View {
         content
             .id(assignment)
             .environment(\.spaceContentPresentation, contentPresentation)
-            .environment(objects.sidebarInteraction)
-            .environment(objects.extensionSidePanel)
-            .environment(objects.downloadFeedback)
-            .environment(objects.passkeyAccess)
-            .environment(objects.softwareUpdates)
-            .environment(objects.agentEndpoint)
-            .environment(objects.core)
+            .spacePageObjects(objects)
     }
 }
 

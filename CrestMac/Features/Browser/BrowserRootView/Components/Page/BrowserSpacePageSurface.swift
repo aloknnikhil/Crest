@@ -6,17 +6,20 @@ struct BrowserSpacePageSurface: NSViewRepresentable {
     let tabPromotionNamespace: Namespace.ID
     let shortcuts: BrowserShortcutStore?
     var appearance = BrowserChromeAppearance()
+    /// The room the sidebar takes beside the page.
+    var reservedWidth: CGFloat = 0
 
     @AppStorage(SpacePageMotionPreference.key)
     private var animatesSpacePages = SpacePageMotionPreference.defaultValue
     private var pageEnvironment = SpacePageEnvironment()
 
-    func makeNSView(context: Context) -> SpaceContentPagerView<BrowserRootPageSurface> {
-        SpaceContentPagerView(frame: .zero)
+    func makeNSView(context: Context) -> SpaceContentFrameView<SpaceContentPagerView<BrowserRootPageSurface>> {
+        SpaceContentFrameView(content: SpaceContentPagerView(frame: .zero))
     }
 
     func sizeThatFits(
-        _ proposal: ProposedViewSize, nsView: SpaceContentPagerView<BrowserRootPageSurface>, context: Context
+        _ proposal: ProposedViewSize, nsView: SpaceContentFrameView<SpaceContentPagerView<BrowserRootPageSurface>>,
+        context: Context
     ) -> CGSize? {
         // The shell determines the content area; retained pages fill it.
         // Native fitting would walk every retained page's subtree, every
@@ -24,9 +27,13 @@ struct BrowserSpacePageSurface: NSViewRepresentable {
         proposal.replacingUnspecifiedDimensions(by: .zero)
     }
 
-    func updateNSView(_ view: SpaceContentPagerView<BrowserRootPageSurface>, context: Context) {
+    func updateNSView(_ view: SpaceContentFrameView<SpaceContentPagerView<BrowserRootPageSurface>>, context: Context) {
         let objects = pageEnvironment.objects
         view.update(
+            reservedLeft: appearance.sidebarOnRight ? 0 : reservedWidth,
+            reservedRight: appearance.sidebarOnRight ? reservedWidth : 0,
+            slide: context.transaction.sidebarSlide)
+        view.content.update(
             spaces: BrowserSidebarAccessPolicy.availableSpaces(in: model.browser),
             selectedSpaceID: model.browser.selectedSpaceID,
             lockedSpaceIDs: model.lockedSpaceIDs,
@@ -46,7 +53,9 @@ struct BrowserSpacePageSurface: NSViewRepresentable {
         }
     }
 
-    static func dismantleNSView(_ view: SpaceContentPagerView<BrowserRootPageSurface>, coordinator: ()) {
-        view.disconnect()
+    static func dismantleNSView(
+        _ view: SpaceContentFrameView<SpaceContentPagerView<BrowserRootPageSurface>>, coordinator: ()
+    ) {
+        view.content.disconnect()
     }
 }

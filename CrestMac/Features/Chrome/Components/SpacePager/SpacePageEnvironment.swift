@@ -42,3 +42,16 @@ struct SpacePageEnvironment: DynamicProperty {
             agentEndpoint: agentEndpoint, core: core)
     }
 }
+
+extension View {
+    /// Gives a root in its own hosting view the objects its window shares.
+    func spacePageObjects(_ objects: SpacePageObjects) -> some View {
+        environment(objects.sidebarInteraction)
+            .environment(objects.extensionSidePanel)
+            .environment(objects.downloadFeedback)
+            .environment(objects.passkeyAccess)
+            .environment(objects.softwareUpdates)
+            .environment(objects.agentEndpoint)
+            .environment(objects.core)
+    }
+}

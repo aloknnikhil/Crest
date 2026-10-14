@@ -8,6 +8,9 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
     let reduceTransparency: Bool
     let spaces: [SpaceModel]
     let hoverChanged: @MainActor @Sendable (Bool) -> Void
+    /// Whether the layer moves itself off the window when collapsed, rather
+    /// than leaving that to a host that slides it.
+    let slidesItself: Bool
     let content: Content
 
     @Environment(\.layoutDirection) private var layoutDirection
@@ -20,6 +23,7 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
         reduceTransparency: Bool,
         spaces: [SpaceModel] = [],
         hoverChanged: @escaping @MainActor @Sendable (Bool) -> Void,
+        slidesItself: Bool = true,
         @ViewBuilder content: () -> Content
     ) {
         self.presentation = presentation
@@ -29,6 +33,7 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
         self.reduceTransparency = reduceTransparency
         self.spaces = spaces
         self.hoverChanged = hoverChanged
+        self.slidesItself = slidesItself
         self.content = content()
     }
 
@@ -129,15 +134,11 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
     }
 
     private var surfaceRegionWidth: CGFloat {
-        usesFloatingCardAppearance
-            ? BrowserSidebarPresentationPolicy.floatingHoverRegionWidth(
-                sidebarWidth: width
-            )
-            : width
+        presentation.surfaceWidth(for: width)
     }
 
     private var hiddenOffset: CGFloat {
-        guard presentation == .collapsed else { return 0 }
+        guard slidesItself, presentation == .collapsed else { return 0 }
         return BrowserChromeDirectionPolicy.leadingOffset(
             edge == .leading ? -surfaceRegionWidth : surfaceRegionWidth,
             layoutDirection: layoutDirection
