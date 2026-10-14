@@ -39,7 +39,7 @@ struct BrowserSpaceSidebarPreview: View {
                 .frame(
                     height: BrowserManualSetupSidebarPreviewMetrics.addressHeight
                 )
-                .browserAddressFieldSurface(progress: 0, isLoading: false, isEditing: false, branding: branding)
+                .browserAddressFieldSurface(progress: { 0 }, isLoading: false, isEditing: false, branding: branding)
                 .padding(
                     BrowserManualSetupSidebarPreviewMetrics.addressOuterPadding
                 )

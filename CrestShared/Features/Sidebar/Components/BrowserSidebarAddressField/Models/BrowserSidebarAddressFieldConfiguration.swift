@@ -14,7 +14,8 @@ struct BrowserSidebarAddressFieldConfiguration {
     let isEditing: Binding<Bool>
     var focusRequest = 0
     let isSecure: Bool
-    let progress: Double
+    /// How far the page has loaded, read by the field's surface alone.
+    let progress: @MainActor () -> Double
     let isLoading: Bool
     /// Whether the selected tab is actually holding a page right now. A tab
     /// that has an address but no page behind it keeps the placeholder glyph

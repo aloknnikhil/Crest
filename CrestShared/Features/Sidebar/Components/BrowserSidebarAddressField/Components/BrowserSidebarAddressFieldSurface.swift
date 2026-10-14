@@ -10,7 +10,9 @@ import SwiftUI
 struct BrowserSidebarAddressFieldSurface: ViewModifier {
     var metrics = BrowserSidebarAddressFieldMetrics.pointer
     var leadingPadding: CGFloat? = nil
-    let progress: Double
+    /// How far the page has loaded, read here alone: a load reports progress
+    /// many times, and the field it fills need not redraw for each.
+    let progress: @MainActor () -> Double
     let isLoading: Bool
     let isEditing: Bool
     var branding: SpaceBranding? = nil
@@ -66,7 +68,7 @@ struct BrowserSidebarAddressFieldSurface: ViewModifier {
 
     private var loadingProgress: CGFloat {
         BrowserPageSurfacePresentation.loadingProgress(
-            estimatedProgress: progress,
+            estimatedProgress: progress(),
             isNavigating: isLoading
         )
     }
@@ -85,7 +87,7 @@ extension View {
     func browserAddressFieldSurface(
         metrics: BrowserSidebarAddressFieldMetrics = .pointer,
         leadingPadding: CGFloat? = nil,
-        progress: Double,
+        progress: @escaping @MainActor () -> Double,
         isLoading: Bool,
         isEditing: Bool,
         branding: SpaceBranding? = nil

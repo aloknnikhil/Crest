@@ -92,7 +92,7 @@ struct MobileBrowserSidebarTopChrome: View {
             text: configuration.address,
             isEditing: configuration.isAddressEditing,
             isSecure: displayedURL?.scheme?.lowercased() == "https",
-            progress: selectedPageActions?.activePage?.estimatedProgress ?? 0,
+            progress: { [page = selectedPageActions?.activePage] in page?.estimatedProgress ?? 0 },
             isLoading: selectedPageActions?.activePage?.live.isLoading == true,
             hasResidentPage: false,
             capabilities: configuration.context.capabilities,

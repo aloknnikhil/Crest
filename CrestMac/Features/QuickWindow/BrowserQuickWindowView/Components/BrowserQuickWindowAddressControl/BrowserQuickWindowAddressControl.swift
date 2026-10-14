@@ -36,7 +36,7 @@ struct BrowserQuickWindowAddressControl: View {
         }
         .browserAddressFieldSurface(
             leadingPadding: BrowserQuickWindowLayout.sourceChipLeadingInset,
-            progress: model.page?.estimatedProgress ?? 0,
+            progress: { [page = model.page] in page?.estimatedProgress ?? 0 },
             isLoading: model.page?.live.isLoading == true,
             isEditing: isAddressEditing
         )

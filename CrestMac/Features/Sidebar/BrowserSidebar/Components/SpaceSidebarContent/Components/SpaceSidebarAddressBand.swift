@@ -51,7 +51,7 @@ struct SpaceSidebarAddressBand: View {
             isEditing: isAddressEditing,
             focusRequest: addressFocusRequest,
             isSecure: isSecure,
-            progress: displayedPage?.estimatedProgress ?? 0,
+            progress: { [displayedPage] in displayedPage?.estimatedProgress ?? 0 },
             isLoading: displayedPage?.live.isLoading == true,
             hasResidentPage: displayedPage != nil,
             hasActiveSite: siteControl != nil,

@@ -32,7 +32,7 @@ struct BrowserLookAndFeelAddressPreview: View {
                 text: .constant(BrowserLookAndFeelPreviewMetrics.sampleAddress),
                 isEditing: .constant(false),
                 isSecure: true,
-                progress: 0,
+                progress: { 0 },
                 isLoading: false,
                 capabilities: .init(
                     supportsTouch: capabilities.supportsTouch,
