@@ -90,7 +90,7 @@ final class BrowserSidebarPointerNavigationView: NSView, BrowserMacWindowPointer
         page: (any BrowserSidebarMouseNavigationTarget)?
     ) -> BrowserSidebarMousePointerScope {
         if page != nil { return .webpage }
-        guard !isHidden else { return .unowned }
+        guard !isHiddenOrHasHiddenAncestor else { return .unowned }
         let location = convert(event.locationInWindow, from: nil)
         return bounds.contains(location) ? .sidebar : .unowned
     }

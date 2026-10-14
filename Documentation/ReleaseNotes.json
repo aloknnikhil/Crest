@@ -4125,6 +4125,10 @@
     "address-progress-redraws-alone": {
       "category": "improved",
       "message": "The address field's loading tint advances without redrawing the rest of the sidebar."
+    },
+    "sidebar-keeps-content-hidden": {
+      "category": "improved",
+      "message": "Showing the sidebar again and scrolling or swiping with the trackpad over it take less work, so both stay smooth."
     }
   }
 }

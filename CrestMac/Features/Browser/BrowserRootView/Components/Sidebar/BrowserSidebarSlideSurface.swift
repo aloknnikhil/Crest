@@ -6,8 +6,9 @@ import SwiftUI
 ///
 /// The window's layout keeps the sidebar where it rests. Showing it lands the
 /// new content at once and brings the host's layer in from off the window;
-/// hiding it carries the content it had out first and puts the collapsed
-/// content in only once it has gone, so nothing inside changes as it travels.
+/// hiding it carries the content it had out and hides the host. A hidden
+/// sidebar keeps the content it last showed rather than taking the collapsed
+/// one, so showing it again lays nothing out unless its style changed.
 struct BrowserSidebarSlideSurface<Content: View>: NSViewRepresentable {
     let presentation: BrowserSidebarPresentation
     let edge: HorizontalEdge
@@ -70,15 +71,23 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
 
     private static var slideKey: String { "sidebarSlide" }
     private static var restyleKey: String { "sidebarRestyle" }
+    /// How long a hit test answers again for the same point while the trackpad
+    /// is in use.
+    private static var hitReuseInterval: TimeInterval { 0.1 }
+    /// The events during which AppKit asks for the view under a resting
+    /// pointer over and over: each trackpad touch, scroll and gesture frame.
+    private static var trackpadEvents: Set<NSEvent.EventType> {
+        [.scrollWheel, .gesture, .beginGesture, .endGesture, .magnify, .smartMagnify, .rotate, .swipe, .pressure]
+    }
 
     // MARK: - Variables
 
     private var hostingView: NSHostingView<Root>?
-    /// The content a hide puts in once the sidebar has left.
-    private var pendingRoot: Root?
     private var presentation: BrowserSidebarPresentation?
     private var showsSidebar: Bool { presentation?.showsSidebar ?? true }
     private var slideGeneration: UInt = 0
+    /// The last full hit test: where, when, and what it found.
+    private var recentHit: (point: NSPoint, time: TimeInterval, view: NSView?)?
 
     // MARK: - Initializers
 
@@ -110,9 +119,10 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
             return
         }
         guard showsSidebar != previous.showsSidebar else {
-            if pendingRoot != nil {
-                pendingRoot = root
-            } else if presentation != previous, let slide, window != nil {
+            // A hidden host shows nothing, hit tests nothing and is left out of
+            // accessibility, so the content it last showed stays as it was.
+            guard showsSidebar else { return }
+            if presentation != previous, let slide, window != nil {
                 restyle(hostingView, to: root, over: slide)
             } else {
                 hostingView.rootView = root
@@ -121,7 +131,7 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
         }
         guard let slide, window != nil, let layer else {
             stopSliding()
-            hostingView.rootView = root
+            if showsSidebar { hostingView.rootView = root }
             hostingView.isHidden = !showsSidebar
             return
         }
@@ -130,8 +140,6 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
         if showsSidebar {
             hostingView.rootView = root
             hostingView.isHidden = false
-        } else {
-            pendingRoot = root
         }
         slideGeneration &+= 1
         let generation = slideGeneration
@@ -161,9 +169,22 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
             guard !hostingView.isHidden, frame.contains(point) else { return nil }
             return self
         }
+        guard hostingView?.isHidden == false else { return nil }
+        // Chromium's pages take raw touches, so AppKit hit tests the window for
+        // every trackpad frame while the pointer rests. Walking the sidebar's
+        // rows for each one gives the same answer, so it is reused briefly.
+        let now = ProcessInfo.processInfo.systemUptime
+        if let type = NSApp.currentEvent?.type, Self.trackpadEvents.contains(type), let recentHit,
+            recentHit.point == point, now - recentHit.time < Self.hitReuseInterval,
+            recentHit.view?.isDescendant(of: self) ?? true
+        {
+            return recentHit.view
+        }
         // The region around a hidden or narrower sidebar belongs to the page.
         let view = super.hitTest(point)
-        return view === self ? nil : view
+        let hit = view === self ? nil : view
+        recentHit = (point, now, hit)
+        return hit
     }
 
     // MARK: - Mutators
@@ -204,10 +225,6 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
     private func stopSliding() {
         slideGeneration &+= 1
         layer?.removeAnimation(forKey: Self.slideKey)
-        if let pendingRoot {
-            hostingView?.rootView = pendingRoot
-            self.pendingRoot = nil
-        }
     }
 
     private func finishSliding() {
