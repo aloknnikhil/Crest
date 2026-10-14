@@ -4109,6 +4109,10 @@
     "lighter-pointer-and-extension-work": {
       "category": "improved",
       "message": "Moving the pointer, switching tabs and pages updating their extension badges take much less work, so the window stays responsive with many tabs and extensions."
+    },
+    "lighter-tab-and-palette-switching": {
+      "category": "improved",
+      "message": "Switching tabs and Spaces and opening the command palette redraw far less of the window, so they respond faster."
     }
   }
 }

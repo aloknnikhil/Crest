@@ -93,12 +93,7 @@ struct BrowserRootPageSurface: View, @MainActor Equatable {
                 assignment: isSelectedSpace ? presentation.dropAssignment : nil,
                 state: model.sidebarInteraction.sidebarReorderState
             )
-            .environment(
-                \.browserWebFocusRestorationGate,
-                BrowserWebFocusRestorationGate(
-                    browserChromeOwnsFocus: !isInteractive || !model.isWindowFocused
-                        || model.isAddressEditing || model.chrome.isCommandPalettePresented,
-                    pageChromeOwnsFocus: false))
+            .modifier(BrowserRootPageFocusGate(model: model, isInteractive: isInteractive))
     }
 
     @ViewBuilder
@@ -151,17 +146,11 @@ struct BrowserRootPageSurface: View, @MainActor Equatable {
                                 space: space, cards: model.browser.cards(in: space), pages: model.pages)
                         }
                     } else {
-                        BrowserDetailView(
+                        BrowserRootPageDetail(
+                            model: model,
                             presentation: presentation,
-                            browser: model.browser,
-                            pages: model.pages,
-                            spaceAccess: model.spaceAccess,
                             tabPromotionNamespace: tabPromotionNamespace,
-                            startPageFocusRequest:
-                                model.chrome.startPageFocusRequest,
-                            isCommandPalettePresented:
-                                model.chrome.isCommandPalettePresented,
-                            commands: {
+                            commands: { [model, windows, layoutDirection, shortcuts] in
                                 model.paletteRegistry(
                                     windows: windows, layoutDirection: layoutDirection, shortcuts: shortcuts)
                             },
@@ -179,5 +168,50 @@ struct BrowserRootPageSurface: View, @MainActor Equatable {
                 state: model.sidebarInteraction.sidebarReorderState
             )
         }
+    }
+}
+
+// MARK: - Observers
+
+// Focus and the palette change far more often than what a Space's page shows,
+// so the views below read them rather than every retained Space's page root.
+
+/// Whether the page may take focus back: only in the Space on show, while the
+/// window is focused and neither the address nor the palette has the keyboard.
+private struct BrowserRootPageFocusGate: ViewModifier {
+    let model: BrowserRootModel
+    let isInteractive: Bool
+
+    func body(content: Content) -> some View {
+        content.environment(
+            \.browserWebFocusRestorationGate,
+            BrowserWebFocusRestorationGate(
+                browserChromeOwnsFocus: !isInteractive || !model.isWindowFocused
+                    || model.isAddressEditing || model.chrome.isCommandPalettePresented,
+                pageChromeOwnsFocus: false))
+    }
+}
+
+/// The page's detail, which reads the palette and the Start Page's focus
+/// request itself.
+private struct BrowserRootPageDetail: View {
+    let model: BrowserRootModel
+    let presentation: BrowserPageSurfacePresentation
+    let tabPromotionNamespace: Namespace.ID
+    let commands: () -> BrowserCommandPaletteCommandRegistry
+    let previewsStartPage: Bool
+
+    var body: some View {
+        BrowserDetailView(
+            presentation: presentation,
+            browser: model.browser,
+            pages: model.pages,
+            spaceAccess: model.spaceAccess,
+            tabPromotionNamespace: tabPromotionNamespace,
+            startPageFocusRequest: model.chrome.startPageFocusRequest,
+            isCommandPalettePresented: model.chrome.isCommandPalettePresented,
+            commands: commands,
+            previewsStartPage: previewsStartPage
+        )
     }
 }

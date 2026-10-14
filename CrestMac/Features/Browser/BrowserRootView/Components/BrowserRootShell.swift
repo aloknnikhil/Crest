@@ -62,16 +62,6 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
         .environment(downloadFeedback)
         .environment(\.browserChromeAppearance, appearance)
         .environment(\.spacePagerPresentation, spacePagerPresentation)
-        .environment(
-            \.browserWebFocusRestorationGate,
-            BrowserWebFocusRestorationGate(
-                browserChromeOwnsFocus:
-                    !model.isWindowFocused
-                    || model.isAddressEditing
-                    || model.chrome.isCommandPalettePresented,
-                pageChromeOwnsFocus: false
-            )
-        )
         .animation(chromeAnimation(CrestMotion.collection), value: appearance.sidebarOnRight)
         .animation(
             sidebarAnimation(
@@ -95,10 +85,7 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
             sidebarAnimation(CrestMotion.sidebarDockApproach),
             value: model.isSidebarApproachingDock
         )
-        .animation(
-            BrowserCommandSurfaceMorph.commandPaletteAnimation(reduceMotion: reduceMotion),
-            value: model.isCommandPaletteShown
-        )
+        .modifier(BrowserRootPaletteAnimation(model: model, reduceMotion: reduceMotion))
         .onChange(
             of: model.chrome.utilityPresentation.isSidebarInteractionActive
         ) { _, isActive in
@@ -130,36 +117,19 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
             hidesTowardRight: appearance.sidebarOnRight,
             travel: BrowserSidebarPresentation.collapsed.surfaceWidth(for: model.sidebarWidth)
         ) {
-            BrowserRootSidebarSurfaceLayer(
+            BrowserRootSidebarSurface(
+                model: model,
                 presentation: model.sidebarPresentation,
                 width: model.sidebarWidth,
                 edge: sidebarEdge,
-                space: model.browser.shownSpace,
                 reduceTransparency: reduceTransparency,
-                spaces: model.browser.availableSpaces,
-                hoverChanged: {
-                    model.sidebarSurfaceHoverChanged(
-                        $0,
-                        reduceMotion: reduceMotion
-                    )
-                },
-                slidesItself: false
+                reduceMotion: reduceMotion
             ) {
                 BrowserRootSidebarContent(
                     model: model,
                     spaceSettingsPresentation: spaceSettingsPresentation,
                     commandSurfaceNamespace: commandSurfaceNamespace,
                     tabPromotionNamespace: tabPromotionNamespace
-                )
-            }
-            .background {
-                BrowserSidebarPointerNavigation(
-                    isSidebarVisible:
-                        model.sidebarPresentation.showsSidebar
-                        && !model.chrome.isCommandPalettePresented,
-                    perform: model.handleAuxiliaryMouseAction,
-                    navigationTargets: { [pages = model.pages] in pages.livePages },
-                    activeTarget: { [pages = model.pages] in pages.activePage }
                 )
             }
         }
@@ -170,10 +140,7 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
 
     private var standardContent: some View {
         ZStack(alignment: .leading) {
-            BrowserRootBackdrop(
-                space: model.browser.shownSpace,
-                spaces: model.browser.availableSpaces
-            )
+            BrowserRootShellBackdrop(browser: model.browser)
 
             // The page and sidebar land in their new places at once; their
             // AppKit views carry the slide on the render server.
@@ -203,8 +170,7 @@ struct BrowserRootShell: View, BrowserChromeAnimating {
                         model: model, storedSidebarWidth: $storedSidebarWidth, sidebarEdge: sidebarEdge)
                 }
             }
-            .allowsHitTesting(!model.chrome.isCommandPalettePresented)
-            .accessibilityHidden(model.chrome.isCommandPalettePresented)
+            .modifier(BrowserRootPaletteObscuring(chrome: model.chrome))
             .browserSidebarSlideTransaction()
 
             BrowserRootUtilityFanLayer(model: model, sidebarOnRight: appearance.sidebarOnRight)
@@ -265,5 +231,83 @@ private struct BrowserRootPermissionObserver: ViewModifier {
                 model.presentFloatingSidebar(reduceMotion: reduceMotion)
             }
         }
+    }
+}
+
+// MARK: - Observers
+
+// The shell's body reads only what moves the sidebar, so a tab switch, a Space
+// switch, focus or the palette re-evaluates the small views below rather than
+// the window's root and every input it hands down.
+
+/// The backdrop follows the shown Space by itself.
+private struct BrowserRootShellBackdrop: View {
+    let browser: BrowserStore
+
+    var body: some View {
+        BrowserRootBackdrop(space: browser.shownSpace, spaces: browser.availableSpaces)
+    }
+}
+
+/// The sidebar's surface, which reads the shown Space and the palette itself.
+/// Its presentation and width come from the shell, since the sidebar's host
+/// decides when a hide lets the collapsed content in.
+private struct BrowserRootSidebarSurface<Content: View>: View {
+    let model: BrowserRootModel
+    let presentation: BrowserSidebarPresentation
+    let width: CGFloat
+    let edge: HorizontalEdge
+    let reduceTransparency: Bool
+    let reduceMotion: Bool
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        BrowserRootSidebarSurfaceLayer(
+            presentation: presentation,
+            width: width,
+            edge: edge,
+            space: model.browser.shownSpace,
+            reduceTransparency: reduceTransparency,
+            spaces: model.browser.availableSpaces,
+            hoverChanged: { [model, reduceMotion] in
+                model.sidebarSurfaceHoverChanged($0, reduceMotion: reduceMotion)
+            },
+            slidesItself: false
+        ) {
+            content
+        }
+        .background {
+            BrowserSidebarPointerNavigation(
+                isSidebarVisible: presentation.showsSidebar && !model.chrome.isCommandPalettePresented,
+                perform: model.handleAuxiliaryMouseAction,
+                navigationTargets: { [pages = model.pages] in pages.livePages },
+                activeTarget: { [pages = model.pages] in pages.activePage }
+            )
+        }
+    }
+}
+
+/// The page and sidebar stop taking input while the palette covers them.
+private struct BrowserRootPaletteObscuring: ViewModifier {
+    let chrome: BrowserChromeState
+
+    func body(content: Content) -> some View {
+        content
+            .allowsHitTesting(!chrome.isCommandPalettePresented)
+            .accessibilityHidden(chrome.isCommandPalettePresented)
+    }
+}
+
+/// Animates the window's changes as the palette opens and closes. Whether it
+/// is shown depends on the selected tab, which changes far more often.
+private struct BrowserRootPaletteAnimation: ViewModifier {
+    let model: BrowserRootModel
+    let reduceMotion: Bool
+
+    func body(content: Content) -> some View {
+        content.animation(
+            BrowserCommandSurfaceMorph.commandPaletteAnimation(reduceMotion: reduceMotion),
+            value: model.isCommandPaletteShown
+        )
     }
 }
