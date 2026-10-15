@@ -4133,6 +4133,10 @@
     "scroll-button-glass-idle": {
       "category": "internal",
       "message": "Give the sidebar's scroll button interactive glass only while it shows"
+    },
+    "sidebar-scroll-smooth-again": {
+      "category": "fixed",
+      "message": "Scrolling a long list of tabs in the sidebar is smooth again."
     }
   }
 }

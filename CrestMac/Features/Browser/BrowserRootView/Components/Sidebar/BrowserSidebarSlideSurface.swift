@@ -71,14 +71,6 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
 
     private static var slideKey: String { "sidebarSlide" }
     private static var restyleKey: String { "sidebarRestyle" }
-    /// How long a hit test answers again for the same point while the trackpad
-    /// is in use.
-    private static var hitReuseInterval: TimeInterval { 0.1 }
-    /// The events during which AppKit asks for the view under a resting
-    /// pointer over and over: each trackpad touch, scroll and gesture frame.
-    private static var trackpadEvents: Set<NSEvent.EventType> {
-        [.scrollWheel, .gesture, .beginGesture, .endGesture, .magnify, .smartMagnify, .rotate, .swipe, .pressure]
-    }
 
     // MARK: - Variables
 
@@ -86,8 +78,6 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
     private var presentation: BrowserSidebarPresentation?
     private var showsSidebar: Bool { presentation?.showsSidebar ?? true }
     private var slideGeneration: UInt = 0
-    /// The last full hit test: where, when, and what it found.
-    private var recentHit: (point: NSPoint, time: TimeInterval, view: NSView?)?
 
     // MARK: - Initializers
 
@@ -161,30 +151,13 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
-        // A pointer move asks only whether the sidebar is under the pointer,
-        // for the window's hover; the sidebar's own host tracks hover inside
-        // it. Walking every row here on every move cost more than anything
-        // else the window did.
-        if NSApp.currentEvent?.type == .mouseMoved, let hostingView {
-            guard !hostingView.isHidden, frame.contains(point) else { return nil }
-            return self
-        }
+        // AppKit chooses the view a scroll gesture goes to by hit testing,
+        // so the sidebar always answers with the view truly under the point:
+        // answering for itself sent the tab list's scrolling to the host.
         guard hostingView?.isHidden == false else { return nil }
-        // Chromium's pages take raw touches, so AppKit hit tests the window for
-        // every trackpad frame while the pointer rests. Walking the sidebar's
-        // rows for each one gives the same answer, so it is reused briefly.
-        let now = ProcessInfo.processInfo.systemUptime
-        if let type = NSApp.currentEvent?.type, Self.trackpadEvents.contains(type), let recentHit,
-            recentHit.point == point, now - recentHit.time < Self.hitReuseInterval,
-            recentHit.view?.isDescendant(of: self) ?? true
-        {
-            return recentHit.view
-        }
         // The region around a hidden or narrower sidebar belongs to the page.
         let view = super.hitTest(point)
-        let hit = view === self ? nil : view
-        recentHit = (point, now, hit)
-        return hit
+        return view === self ? nil : view
     }
 
     // MARK: - Mutators

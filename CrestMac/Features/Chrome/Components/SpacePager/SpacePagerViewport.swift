@@ -181,11 +181,6 @@ final class SpacePagerViewport<Content: View>: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? {
         let local = convert(point, from: superview)
         guard bounds.contains(local), !isHiddenOrHasHiddenAncestor else { return nil }
-        // A pointer move asks only which view is under the pointer, for the
-        // hover of the views around the pager. Each page's own hosting view
-        // tracks hover inside it, so walking every row here on every move
-        // would only repeat that work.
-        guard NSApp.currentEvent?.type != .mouseMoved else { return self }
         // During settling AppKit's model frames already describe the endpoint.
         // Controls become available when their visible frames have arrived.
         guard motion == nil, expectedSelection == nil,
