@@ -4137,6 +4137,10 @@
     "sidebar-scroll-smooth-again": {
       "category": "fixed",
       "message": "Scrolling a long list of tabs in the sidebar is smooth again."
+    },
+    "sidebar-scroll-lighter": {
+      "category": "improved",
+      "message": "Scrolling the sidebar takes less work: tab status badges and the scroll bar no longer redraw for every step."
     }
   }
 }

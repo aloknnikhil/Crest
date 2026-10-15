@@ -27,6 +27,12 @@ struct BrowserTabStatusBadge: View {
     /// proportion to it.
     var diameter: CGFloat = BrowserTabStatusBadge.diameter
 
+    /// Interactive glass follows the pointer every frame, and a list scrolling
+    /// under a resting pointer moves every badge in it, so a badge's glass
+    /// answers only while the pointer is over it, which is where a press
+    /// starts anyway.
+    @State private var isHovering = false
+
     var body: some View {
         let symbol = diameter * Self.markSize / Self.diameter
         let hitTarget = diameter * Self.hitTarget / Self.diameter
@@ -39,10 +45,11 @@ struct BrowserTabStatusBadge: View {
                 .contentTransition(.symbolEffect(.replace))
                 .frame(width: symbol, height: symbol)
                 .frame(width: diameter, height: diameter)
-                .glassEffect(.regular.tint(mark.tint).interactive(), in: .circle)
+                .glassEffect(.regular.tint(mark.tint).interactive(isHovering), in: .circle)
                 .frame(width: hitTarget, height: hitTarget)
                 .contentShape(.circle)
         }
         .buttonStyle(.plain)
+        .onHover { isHovering = $0 }
     }
 }

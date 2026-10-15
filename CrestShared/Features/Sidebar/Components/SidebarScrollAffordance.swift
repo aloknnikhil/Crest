@@ -72,8 +72,13 @@ private struct SidebarScrollMetrics: Equatable {
 @MainActor
 @Observable
 private final class SidebarScrollActivity {
-    var contentHeight: CGFloat = 0
-    var hasMoreBelow: Bool { contentHeight > metrics.visibleBottom + 1 }
+    var contentHeight: CGFloat = 0 {
+        didSet { updateMoreBelow() }
+    }
+    /// Whether rows lie below the visible ones. Kept apart from `metrics`,
+    /// which changes on every scroll step, so the button reads a value that
+    /// changes only when the list reaches or leaves its end.
+    private(set) var hasMoreBelow = false
     private(set) var metrics = SidebarScrollMetrics()
     private(set) var showsIndicator = false
     @ObservationIgnored private var isScrolling = false
@@ -84,6 +89,7 @@ private final class SidebarScrollActivity {
             abs(value.offset - metrics.offset) > 0.5
             && value.viewportHeight == metrics.viewportHeight && value.contentHeight == metrics.contentHeight
         metrics = value
+        updateMoreBelow()
         // Discrete mouse wheels and programmatic drag autoscrolling may move
         // without a native gesture phase. They use the same idle deadline.
         if moved {
@@ -103,6 +109,11 @@ private final class SidebarScrollActivity {
         idleTask = nil
         isScrolling = false
         showsIndicator = false
+    }
+
+    private func updateMoreBelow() {
+        let more = contentHeight > metrics.visibleBottom + 1
+        if more != hasMoreBelow { hasMoreBelow = more }
     }
 
     private func scheduleIdle() {
@@ -127,20 +138,8 @@ private struct SidebarScrollIndicator: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let track = max(0, geometry.size.height - 8)
-            let metrics = activity.metrics
-            let height = min(track, max(24, track * metrics.viewportHeight / max(1, metrics.contentHeight)))
-            let fraction = min(1, max(0, metrics.offset / max(1, metrics.maximumOffset)))
             ZStack(alignment: .bottom) {
-                Capsule()
-                    .fill(.primary.opacity(0.45))
-                    .frame(width: 3, height: height)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                    .padding(.trailing, 3)
-                    .offset(y: 4 + (track - height) * fraction)
-                    .opacity(activity.showsIndicator && metrics.maximumOffset > 1 ? 1 : 0)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
+                SidebarScrollBar(activity: activity, track: max(0, geometry.size.height - 8))
 
                 Button(action: scrollDown) {
                     Image(systemName: "arrow.down")
@@ -173,5 +172,28 @@ private struct SidebarScrollIndicator: View {
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: showsBubble)
             .clipped()
         }
+    }
+}
+
+/// The bar that shows where the list is scrolled. It alone reads the scroll
+/// position, which changes on every step, so nothing else in the affordance
+/// redraws while the list moves.
+private struct SidebarScrollBar: View {
+    let activity: SidebarScrollActivity
+    let track: CGFloat
+
+    var body: some View {
+        let metrics = activity.metrics
+        let height = min(track, max(24, track * metrics.viewportHeight / max(1, metrics.contentHeight)))
+        let fraction = min(1, max(0, metrics.offset / max(1, metrics.maximumOffset)))
+        Capsule()
+            .fill(.primary.opacity(0.45))
+            .frame(width: 3, height: height)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+            .padding(.trailing, 3)
+            .offset(y: 4 + (track - height) * fraction)
+            .opacity(activity.showsIndicator && metrics.maximumOffset > 1 ? 1 : 0)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 }
