@@ -391,10 +391,12 @@
         /// menu for this page.
         func addMenuItems(to menu: NSMenu, link: URL?, selection: String?) {
             guard !disposed, let menuHost else { return }
+            // Chromium's menu for a link opens with its open-in-new-tab item.
+            let openLink = link == nil ? nil : menu.items.first.flatMap { $0.isSeparatorItem ? nil : $0 }
             BrowserPageContextMenu(
                 actions: menuHost.contextMenuActions(linkURL: link, selectionText: selection), host: menuHost,
                 view: surface
-            ).insert(into: menu)
+            ).insert(into: menu, leading: openLink)
         }
 
         /// Starts Crest's own drag of the link to `url` out of the page; false

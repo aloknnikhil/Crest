@@ -162,8 +162,18 @@ struct BrowserPageContextMenu {
     // MARK: - Actions - Menu
 
     /// Puts the rows ahead of what `menu` holds, with a separator between.
-    func insert(into menu: NSMenu) {
+    /// `leading`, the engine's own item that opens the link in a new tab, goes
+    /// first of all, since it is the row a link's menu is opened for most.
+    func insert(into menu: NSMenu, leading: NSMenuItem? = nil) {
+        if let leading, menu.index(of: leading) > 0 {
+            menu.removeItem(leading)
+            menu.insertItem(leading, at: 0)
+        }
         guard !actions.isEmpty else { return }
+        let offset = leading.map { menu.index(of: $0) == 0 ? 1 : 0 } ?? 0
+        if offset > 0, menu.items.count > 1, !menu.items[1].isSeparatorItem {
+            menu.insertItem(.separator(), at: 1)
+        }
         var items: [NSMenuItem] = []
         let spaceActions = actions.filter(\.isSpaceDestination)
         if !spaceActions.isEmpty {
@@ -176,8 +186,10 @@ struct BrowserPageContextMenu {
             items.append(group)
         }
         items.append(contentsOf: actions.filter { !$0.isSpaceDestination }.map(item(for:)))
-        for (index, item) in items.enumerated() { menu.insertItem(item, at: index) }
-        if menu.items.count > items.count { menu.insertItem(.separator(), at: items.count) }
+        let start = offset > 0 ? offset + 1 : 0
+        for (index, item) in items.enumerated() { menu.insertItem(item, at: start + index) }
+        let end = start + items.count
+        if menu.items.count > end, !menu.items[end].isSeparatorItem { menu.insertItem(.separator(), at: end) }
     }
 
     private func item(for action: BrowserPageContextMenuAction) -> NSMenuItem {

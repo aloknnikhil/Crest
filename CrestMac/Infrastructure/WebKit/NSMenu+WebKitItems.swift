@@ -3,6 +3,12 @@ import AppKit
 extension NSMenu {
     // MARK: - Variables
 
+    /// WebKit's item that opens a link apart from the page, when the menu has
+    /// one.
+    var webKitOpenLinkItem: NSMenuItem? {
+        items.first { $0.identifier == .webKitOpenLinkInNewWindow }
+    }
+
     /// WebKit's Download Image item, when the menu has one.
     var webKitDownloadImageItem: NSMenuItem? {
         items.first { $0.identifier == .webKitDownloadImage }

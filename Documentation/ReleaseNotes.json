@@ -4149,6 +4149,10 @@
     "sidebar-drag-holds-rows-still": {
       "category": "fixed",
       "message": "Dragging a tab through the sidebar no longer makes rows jump or flash, including while the list scrolls at its edge."
+    },
+    "link-menu-new-tab-first": {
+      "category": "improved",
+      "message": "Open Link in New Tab is the first choice when you right-click a link."
     }
   }
 }
