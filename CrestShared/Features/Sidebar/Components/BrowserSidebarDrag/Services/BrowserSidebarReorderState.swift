@@ -36,6 +36,10 @@ final class BrowserSidebarReorderState {
     /// A small buffer beyond the visible sidebar before a tab offers a split.
     static let sidebarExitBuffer: CGFloat = 24
 
+    /// How long after the list last scrolled under a lift it counts as still:
+    /// its rows take a drop onto them again and its gap moves smoothly.
+    static let scrollUnderLiftSettle: Duration = .milliseconds(200)
+
     // MARK: - Variables
 
     private(set) var lift: Lift?
@@ -97,6 +101,12 @@ final class BrowserSidebarReorderState {
     }
 
     @ObservationIgnored private var verticalDirection: CGFloat = 0
+    /// Whether the list is scrolling under the lift, as it does at an edge.
+    /// The gap then follows the pointer through rows passing faster than it
+    /// could slide, so it moves at once, and the rows passing take no drop
+    /// onto them, since no one aims at them.
+    private(set) var isScrollingUnderLift = false
+    @ObservationIgnored private var scrollUnderLiftTask: Task<Void, Never>?
 
     private let geometry = BrowserSidebarReorderGeometry()
 
@@ -220,6 +230,14 @@ final class BrowserSidebarReorderState {
 
     func scrollableContentDidMove(in id: UUID, by offsetY: CGFloat) {
         guard isDragging, offsetY != 0 else { return }
+        if !isScrollingUnderLift { isScrollingUnderLift = true }
+        scrollUnderLiftTask?.cancel()
+        scrollUnderLiftTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: Self.scrollUnderLiftSettle)
+            guard !Task.isCancelled, let self else { return }
+            isScrollingUnderLift = false
+            if isDragging { resolveTarget() }
+        }
         geometry.scrollableContentDidMove(in: id, by: offsetY)
         refreshLayout()
         resolveTarget()
@@ -462,6 +480,7 @@ final class BrowserSidebarReorderState {
             lastPreviewShape = nil
             hasEnteredSplitContent = false
             constraintMessage = nil
+            endScrollingUnderLift()
         }
         guard constraintMessage == nil, let lift, let target = resolvedTarget else { return nil }
         return BrowserSidebarReorderDrop(item: lift.item, target: target, plan: lift.plan)
@@ -485,6 +504,13 @@ final class BrowserSidebarReorderState {
         lastPreviewShape = nil
         hasEnteredSplitContent = false
         constraintMessage = nil
+        endScrollingUnderLift()
+    }
+
+    private func endScrollingUnderLift() {
+        scrollUnderLiftTask?.cancel()
+        scrollUnderLiftTask = nil
+        if isScrollingUnderLift { isScrollingUnderLift = false }
     }
 
     func yieldToCompetingInteraction() {
@@ -504,6 +530,7 @@ final class BrowserSidebarReorderState {
     }
 
     // MARK: - Displacement
+
     func displacement(for id: BrowserSidebarReorderItemID) -> CGSize {
         if let row = geometry.rows[id]?.row, row.usesGridOrdering,
             row.space == lift?.item.spaceAssignment,
@@ -703,7 +730,8 @@ final class BrowserSidebarReorderState {
         resolvedTarget = BrowserSidebarReorderAim(
             lift: lift, pointer: pointer, insertionPoint: insertionProbe(for: lift), layout: layout,
             pinned: pinnedGeometry, zones: visibleZones, rows: geometry.rows,
-            splitCards: geometry.splitCards
+            splitCards: geometry.splitCards,
+            takesRowDrops: !isScrollingUnderLift
         ).target(previousTarget: previousTarget)
         if case .splitInsert = resolvedTarget?.kind { hasEnteredSplitContent = true }
     }
@@ -743,6 +771,11 @@ final class BrowserSidebarReorderState {
         }
         next.gap = nil
         if constraintMessage != nil {
+            if next != layout { layout = next }
+            return
+        }
+        if resolvedTarget?.kind.holdsOpenSlot == true {
+            next.gap = layout.gap
             if next != layout { layout = next }
             return
         }

@@ -82,11 +82,7 @@ private struct BrowserNewTabRowTooltip: ViewModifier {
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if metrics.showsShortcutTooltip {
-            content.help("New Tab (⌘T)")
-        } else {
-            content
-        }
+        content.crestHelp(metrics.showsShortcutTooltip ? "New Tab (⌘T)" : nil)
     }
 }
 

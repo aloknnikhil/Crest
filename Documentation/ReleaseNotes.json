@@ -4141,6 +4141,14 @@
     "sidebar-scroll-lighter": {
       "category": "improved",
       "message": "Scrolling the sidebar takes less work: tab status badges and the scroll bar no longer redraw for every step."
+    },
+    "sidebar-long-list-native-scroll": {
+      "category": "improved",
+      "message": "Long tab lists in the sidebar scroll smoothly, and hover highlights follow the pointer without lag."
+    },
+    "sidebar-drag-holds-rows-still": {
+      "category": "fixed",
+      "message": "Dragging a tab through the sidebar no longer makes rows jump or flash, including while the list scrolls at its edge."
     }
   }
 }

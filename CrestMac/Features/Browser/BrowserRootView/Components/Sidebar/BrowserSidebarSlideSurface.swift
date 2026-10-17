@@ -78,6 +78,8 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
     private var presentation: BrowserSidebarPresentation?
     private var showsSidebar: Bool { presentation?.showsSidebar ?? true }
     private var slideGeneration: UInt = 0
+    /// Each pointer move hit tests the sidebar several times; it is walked once.
+    private var hitCache = BrowserPointerHitCache()
 
     // MARK: - Initializers
 
@@ -156,7 +158,7 @@ final class BrowserSidebarSlideView<Root: View>: NSView {
         // answering for itself sent the tab list's scrolling to the host.
         guard hostingView?.isHidden == false else { return nil }
         // The region around a hidden or narrower sidebar belongs to the page.
-        let view = super.hitTest(point)
+        let view = hitCache.hitTest(point, in: self) { super.hitTest(point) }
         return view === self ? nil : view
     }
 

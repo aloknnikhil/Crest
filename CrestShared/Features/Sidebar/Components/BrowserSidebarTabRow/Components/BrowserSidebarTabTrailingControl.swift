@@ -84,7 +84,7 @@ private struct BrowserSidebarTabUnloadButton: View {
         .disabled(!configuration.isLoaded || !configuration.isAvailableForDisplay)
         .allowsHitTesting(isVisible)
         .accessibilityLabel("Unload \(configuration.tab.shownTitle)")
-        .help("Unload Tab")
+        .crestHelp(isVisible ? "Unload Tab" : nil)
     }
 
     private var metrics: BrowserTabTrailingControlMetrics {

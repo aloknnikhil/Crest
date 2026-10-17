@@ -4,12 +4,13 @@ import SwiftUI
 
 /// The windowed shell's scrolling chrome around the shared tab list.
 ///
-/// Two things here belong to this shell and not to the list. The list is laid
-/// out lazily and pinned to the top of a region at least as tall as the sidebar,
-/// so the space below the last row is real and can be handed to `background` —
-/// which is what makes the empty sidebar draggable and right-clickable. And a
-/// tap anywhere over the region gives up address focus, because on this shell
-/// the address field keeps it until something takes it away.
+/// Two things here belong to this shell and not to the list. The list scrolls
+/// in an AppKit scroll view, pinned to the top of a region at least as tall as
+/// the sidebar, so the space below the last row is real and can be handed to
+/// `background` — which is what makes the empty sidebar draggable and
+/// right-clickable. And a tap anywhere over the region gives up address focus,
+/// because on this shell the address field keeps it until something takes it
+/// away.
 struct SpaceSidebarTabListScroll<Background: View, Content: View>: View {
     @Environment(BrowserSidebarInteractionState.self) private var sidebarInteraction
 
@@ -19,43 +20,38 @@ struct SpaceSidebarTabListScroll<Background: View, Content: View>: View {
 
     @State private var scrollRegionID = UUID()
     @State private var viewport = BrowserSidebarScrollViewport()
+    @State private var scroll = BrowserSidebarNativeScrollState()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 0) {
-                    LazyVStack(spacing: 0) {
-                        content()
-                    }
-                    .sidebarScrollContent()
-
-                    background()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: geometry.size.height, alignment: .top)
+        BrowserSidebarNativeScroll(scroll: scroll) {
+            content()
+        } background: {
+            background()
                 .background {
-                    // A ScrollView's outer background is a native sibling of
-                    // its NSScrollView. The bridge needs the document ancestry.
+                    // The bridge finds the scroll view it drives among its own
+                    // ancestors, so it lives inside the scrolled document.
                     BrowserSidebarDragAutoscrollObserver(
                         regionID: scrollRegionID,
                         viewport: viewport,
                         state: sidebarInteraction.sidebarReorderState
                     )
                 }
-            }
-            .environment(\.browserSidebarScrollRegionID, scrollRegionID)
-            .modifier(SidebarScrollAffordance(isDragging: sidebarInteraction.sidebarReorderState.isDragging))
-            .scrollClipDisabled(
-                !BrowserSidebarReorderVisuals.clipsScrollableRegionWhenIdle
+        }
+        .environment(\.browserSidebarScrollRegionID, scrollRegionID)
+        .overlay(alignment: .bottom) {
+            SidebarMoreRowsButton(isShown: showsMoreRows, scrollDown: scroll.scrollTowardEnd)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: showsMoreRows)
+        }
+        .background {
+            BrowserSidebarScrollViewportObserver(
+                regionID: scrollRegionID,
+                viewport: viewport,
+                state: sidebarInteraction.sidebarReorderState
             )
-            .background {
-                BrowserSidebarScrollViewportObserver(
-                    regionID: scrollRegionID,
-                    viewport: viewport,
-                    state: sidebarInteraction.sidebarReorderState
-                )
-            }
+        }
+        .onChange(of: sidebarInteraction.sidebarReorderState.isDragging, initial: true) { _, dragging in
+            scroll.holdsHeight = dragging
         }
         .onDisappear {
             sidebarInteraction.sidebarReorderState.removeScrollRegion(for: scrollRegionID)
@@ -67,6 +63,10 @@ struct SpaceSidebarTabListScroll<Background: View, Content: View>: View {
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Saved and current tabs")
+    }
+
+    private var showsMoreRows: Bool {
+        scroll.hasMoreBelow && !scroll.isScrolling && !sidebarInteraction.sidebarReorderState.isDragging
     }
 }
 

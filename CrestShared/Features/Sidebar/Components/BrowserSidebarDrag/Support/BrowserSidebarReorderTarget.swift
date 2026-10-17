@@ -118,6 +118,18 @@ struct BrowserSidebarReorderTarget: Equatable, Sendable {
 
         // MARK: - Actions - Presentation
 
+        /// Whether the slot the lift last opened among the rows stays open over
+        /// this target. Dropping onto a row lands inside it, so the rows hold
+        /// still around that slot; closing it would move every row below by a
+        /// row's height as the pointer, or the list scrolling under it, passed
+        /// each row's middle.
+        var holdsOpenSlot: Bool {
+            switch self {
+            case .intoFolder, .createCurrentFolder: true
+            case .insert, .space, .splitInsert: false
+            }
+        }
+
         /// The shape a lifted tab takes over this target, or `resting`, the
         /// shape it keeps where the target says nothing of its own.
         func previewShape(resting: BrowserTabDragPreviewShape?) -> BrowserTabDragPreviewShape? {

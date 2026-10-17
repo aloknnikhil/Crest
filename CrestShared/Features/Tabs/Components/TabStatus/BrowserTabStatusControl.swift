@@ -15,7 +15,7 @@ struct BrowserTabStatusControl<Label: View>: View {
 
     var body: some View {
         control
-            .help(Text(mark.title))
+            .crestHelp(mark.title)
             .animation(
                 CrestMotion.contentState.unlessReducingMotion(reduceMotion),
                 value: mark

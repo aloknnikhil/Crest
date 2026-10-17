@@ -23,6 +23,7 @@ struct BrowserSidebarReorderZoneModifier: ViewModifier {
     @Environment(\.browserSidebarScrollRegionID) private var scrollRegionID
     @Environment(\.browserSidebarDropViewportID) private var sidebarViewportID
     @Environment(\.sidebarSpaceIsSelected) private var isSelected
+    @Environment(\.browserSidebarReorderGeometryPaused) private var isGeometryPaused
 
     func body(content: Content) -> some View {
         let isActive =
@@ -33,17 +34,21 @@ struct BrowserSidebarReorderZoneModifier: ViewModifier {
         let topInset = topInset
         let minimumHeight = minimumHeight
         let supportsTouch = capabilities.supportsTouch
+        let isGeometryPaused = isGeometryPaused
         return
             content
-            .onGeometryChange(for: BrowserSidebarReorderZone?.self) { proxy in
-                guard isActive else { return nil }
-                return BrowserSidebarReorderZone(
-                    target: target,
-                    frame: Self.resolvedFrame(
-                        proxy.frame(in: BrowserSidebarReorderSpace.globalSpace), target: target, topInset: topInset),
-                    minimumHeight: minimumHeight,
-                    supportsTouch: supportsTouch)
-            } action: { zone in
+            .onGeometryChange(for: BrowserSidebarReorderMeasurement<BrowserSidebarReorderZone>.self) { proxy in
+                guard !isGeometryPaused else { return .paused }
+                guard isActive else { return .measured(nil) }
+                return .measured(
+                    BrowserSidebarReorderZone(
+                        target: target,
+                        frame: Self.resolvedFrame(
+                            proxy.frame(in: BrowserSidebarReorderSpace.globalSpace), target: target, topInset: topInset),
+                        minimumHeight: minimumHeight,
+                        supportsTouch: supportsTouch))
+            } action: { measurement in
+                guard case .measured(let zone) = measurement else { return }
                 guard let zone else {
                     state.removeZone(for: identity)
                     return

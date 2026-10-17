@@ -22,7 +22,7 @@ struct TabEngineBadge: View {
 
     var body: some View {
         if !isCornerTaken, let engine = core?.state.engineBadge(forTab: tabID), let mark = engine.mark {
-            TabFaviconBadge(mark: mark, title: Text(engine.pageDescription), scale: scale)
+            TabFaviconBadge(mark: mark, title: engine.pageDescription, scale: scale)
         }
     }
 }

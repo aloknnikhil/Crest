@@ -41,6 +41,8 @@ final class SpacePagerViewport<Content: View>: NSView {
     private var contentTopInsets: [UUID: CGFloat] = [:]
     private var pendingContentTopInsets: [UUID: CGFloat] = [:]
     private var motionDisplayLink: CADisplayLink?
+    /// Each pointer move hit tests the page several times; it is walked once.
+    private var hitCache = BrowserPointerHitCache()
     private var maximumTrackingSpeed: CGFloat { bounds.width * SpacePagerSettlement.trackingPagesPerSecond }
     private lazy var frameObserver = SpacePagerFrameObserver { [weak self] interval in
         self?.advanceFrame(interval: interval)
@@ -186,7 +188,8 @@ final class SpacePagerViewport<Content: View>: NSView {
         guard motion == nil, expectedSelection == nil,
             let selectedSpaceID, let key = assignment(for: selectedSpaceID)
         else { return self }
-        return hosts[key]?.hitTest(local) ?? self
+        let host = hosts[key]
+        return hitCache.hitTest(point, in: self) { host?.hitTest(local) } ?? self
     }
 
     func teardown() {

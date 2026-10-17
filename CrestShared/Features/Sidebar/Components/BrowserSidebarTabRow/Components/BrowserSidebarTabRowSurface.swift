@@ -125,6 +125,7 @@ struct BrowserSidebarTabRowSurface: ViewModifier {
                     interaction.commitTitle()
                 }
             }
+            .modifier(BrowserSidebarPointerGate(tabID: configuration.tab.id))
     }
 
     /// Opening the menu ends any drag the same row had started. The lift and

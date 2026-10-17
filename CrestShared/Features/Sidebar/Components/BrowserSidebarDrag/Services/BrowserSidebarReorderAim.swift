@@ -13,9 +13,15 @@ struct BrowserSidebarReorderAim {
     let zones: [BrowserSidebarReorderZone]
     let rows: [BrowserSidebarReorderItemID: BrowserSidebarReorderGeometry.RegisteredRow]
     let splitCards: [UUID: BrowserSidebarReorderGeometry.SplitCard]
+    /// Whether the lift may land on a row or inside a folder. Not while the
+    /// list scrolls under a still pointer: each row passing under it would
+    /// light up as a place to drop for a moment, with no one aiming at it.
+    var takesRowDrops = true
 
     func target(previousTarget: BrowserSidebarReorderTarget?) -> BrowserSidebarReorderTarget? {
-        let available = zones.filter { !$0.frame.isEmpty && allowsNesting(in: $0) }
+        let available = zones.filter {
+            !$0.frame.isEmpty && allowsNesting(in: $0) && (takesRowDrops || !$0.target.nests)
+        }
         let direct = BrowserSidebarReorderZone.aimed(
             at: pointer, in: available, accepting: lift.item, plan: lift.plan)
         if let direct, direct.target.outranksGap { return direct.target.reorderTarget(for: self) }

@@ -12,7 +12,7 @@ struct BrowserTabSavedLocationIndicator: View {
             #if os(iOS)
                 .onTapGesture(count: 2, perform: restore)
             #endif
-            .help("Away from saved location — double-click to return")
+            .crestHelp("Away from saved location — double-click to return")
             .accessibilityElement()
             .accessibilityLabel("Away from saved location")
             .accessibilityHint("Double-click to return to the saved URL")

@@ -12,6 +12,7 @@ struct BrowserSidebarReorderContainerModifier: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.browserSidebarScrollRegionID) private var scrollRegionID
     @Environment(\.browserSidebarWindowDrop) private var windowDrop
+    @Environment(\.browserSidebarReorderGeometryPaused) private var isGeometryPaused
 
     /// Identity for this row's registration. A row that changes section keeps
     /// its item identity but is a different view on either side of the move, and
@@ -50,14 +51,18 @@ struct BrowserSidebarReorderContainerModifier: ViewModifier {
                         ? state.frame(ofRow: item.id)?.height : nil,
                     alignment: .top
                 )
-                .onGeometryChange(for: BrowserSidebarReorderRow?.self) { proxy in
+                .onGeometryChange(for: BrowserSidebarReorderMeasurement<BrowserSidebarReorderRow>.self) {
+                    [isGeometryPaused] proxy in
+                    guard !isGeometryPaused else { return .paused }
                     // Availability participates in the measured value so an
                     // unchanged frame is registered again when its Space returns.
-                    guard isEnabled else { return nil }
-                    return BrowserSidebarReorderRow(
-                        id: item.id, space: item.spaceAssignment, section: section,
-                        frame: proxy.frame(in: BrowserSidebarReorderSpace.globalSpace), parentItemID: parentItemID)
-                } action: { row in
+                    guard isEnabled else { return .measured(nil) }
+                    return .measured(
+                        BrowserSidebarReorderRow(
+                            id: item.id, space: item.spaceAssignment, section: section,
+                            frame: proxy.frame(in: BrowserSidebarReorderSpace.globalSpace), parentItemID: parentItemID))
+                } action: { measurement in
+                    guard case .measured(let row) = measurement else { return }
                     guard let row else {
                         state.removeRow(item.id, owner: identity)
                         return
@@ -95,16 +100,13 @@ struct BrowserSidebarReorderContainerModifier: ViewModifier {
         }
         // Layout capacity moves with the gap, across section boundaries.
         .animation(
-            CrestMotion.dragSource.unlessReducingMotion(reduceMotion),
+            BrowserSidebarReorderGap.motion(in: state, reduceMotion: reduceMotion),
             value: [
                 topSpace, bottomSpace,
                 isLifted ? state.layout.height : 0,
             ]
         )
-        .animation(
-            CrestMotion.dragSource.unlessReducingMotion(reduceMotion),
-            value: displacement
-        )
+        .animation(BrowserSidebarReorderGap.motion(in: state, reduceMotion: reduceMotion), value: displacement)
     }
 
     private var indicatorAlignment: Alignment {

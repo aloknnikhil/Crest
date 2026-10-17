@@ -45,6 +45,18 @@ struct BrowserNativeTabSelectionTarget: NSViewRepresentable {
                 .min { $0.bounds.width * $0.bounds.height < $1.bounds.width * $1.bounds.height }?.itemID
         }
 
+        /// The tab whose row lies at a point in the window among the rows
+        /// inside `ancestor`, found from their native bounds alone.
+        static func tab(at windowPoint: NSPoint, within ancestor: NSView) -> UUID? {
+            guard let window = ancestor.window else { return nil }
+            return targets.allObjects
+                .filter {
+                    $0.window === window && !$0.bounds.isEmpty && $0.isDescendant(of: ancestor)
+                        && $0.bounds.contains($0.convert(windowPoint, from: nil))
+                }
+                .min { $0.bounds.width * $0.bounds.height < $1.bounds.width * $1.bounds.height }?.tabID
+        }
+
         static func tab(
             at point: NSPoint, in window: NSWindow, browser: BrowserStore,
             assignment: BrowserSpaceRuntimeAssignment

@@ -29,7 +29,7 @@ struct BrowserSidebarReorderSectionIndicatorModifier: ViewModifier {
             BrowserSidebarReorderGap(height: state.layout.emptySpace(for: section))
         }
         .animation(
-            CrestMotion.dragSource.unlessReducingMotion(reduceMotion),
+            BrowserSidebarReorderGap.motion(in: state, reduceMotion: reduceMotion),
             value: state.layout.emptySpace(for: section)
         )
         .overlay(alignment: alignment) {
@@ -67,9 +67,6 @@ struct BrowserSidebarReorderSectionReservationModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(.bottom, height)
-            .animation(
-                CrestMotion.dragSource.unlessReducingMotion(reduceMotion),
-                value: height
-            )
+            .animation(BrowserSidebarReorderGap.motion(in: state, reduceMotion: reduceMotion), value: height)
     }
 }

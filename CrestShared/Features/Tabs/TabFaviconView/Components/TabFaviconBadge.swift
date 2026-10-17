@@ -38,7 +38,7 @@ struct TabFaviconBadge: View {
     let mark: EngineMark
 
     /// What the badge says when the pointer rests on it.
-    let title: Text
+    let title: LocalizedStringResource
 
     /// The favicon's scale against a default-density row's, which the badge
     /// follows so it keeps its proportion to the icon.
@@ -49,7 +49,7 @@ struct TabFaviconBadge: View {
             .modifier(TabFaviconBadgeDisc(scale: scale))
             .offset(x: Self.overhang * scale, y: Self.overhang * scale)
             .accessibilityHidden(true)
-            .help(title)
+            .crestHelp(title)
     }
 }
 
@@ -62,7 +62,7 @@ struct TabFaviconBadge: View {
                     .frame(width: TabFaviconMetrics.defaultSize, height: TabFaviconMetrics.defaultSize)
                     .overlay(alignment: .bottomTrailing) {
                         if let mark = engine.mark {
-                            TabFaviconBadge(mark: mark, title: Text(engine.pageDescription))
+                            TabFaviconBadge(mark: mark, title: engine.pageDescription)
                         }
                     }
             }

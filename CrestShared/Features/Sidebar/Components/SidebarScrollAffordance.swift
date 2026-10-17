@@ -141,32 +141,7 @@ private struct SidebarScrollIndicator: View {
             ZStack(alignment: .bottom) {
                 SidebarScrollBar(activity: activity, track: max(0, geometry.size.height - 8))
 
-                Button(action: scrollDown) {
-                    Image(systemName: "arrow.down")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .frame(
-                            width: CrestLayout.glassIconButtonDiameter / 2,
-                            height: CrestLayout.glassIconButtonDiameter / 2
-                        )
-                        // Interactive glass tracks the pointer every frame, so it
-                        // answers only while the button is there to press.
-                        .glassEffect(.regular.interactive(showsBubble), in: .circle)
-                        .frame(
-                            width: CrestLayout.minimumHitTarget, height: CrestLayout.minimumHitTarget,
-                            alignment: .bottom
-                        )
-                        .contentShape(.circle)
-                }
-                .labelStyle(.iconOnly)
-                .buttonStyle(.plain)
-                .scaleEffect(reduceMotion || showsBubble ? 1 : 0.5, anchor: .bottom)
-                .offset(y: reduceMotion ? -6 : showsBubble ? -6 : CrestLayout.glassIconButtonDiameter + 8)
-                .opacity(showsBubble ? 1 : 0)
-                .allowsHitTesting(showsBubble)
-                .accessibilityHidden(!showsBubble)
-                .accessibilityLabel("Show more tabs")
-                .accessibilityIdentifier("sidebar-more-tabs")
+                SidebarMoreRowsButton(isShown: showsBubble, scrollDown: scrollDown)
             }
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: activity.showsIndicator)
             .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: showsBubble)
@@ -195,5 +170,42 @@ private struct SidebarScrollBar: View {
             .opacity(activity.showsIndicator && metrics.maximumOffset > 1 ? 1 : 0)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
+    }
+}
+
+/// The button that rises from a list's bottom edge while rows lie below what
+/// shows, and scrolls the list on by most of a screen.
+struct SidebarMoreRowsButton: View {
+    let isShown: Bool
+    let scrollDown: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: scrollDown) {
+            Image(systemName: "arrow.down")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.primary)
+                .frame(
+                    width: CrestLayout.glassIconButtonDiameter / 2,
+                    height: CrestLayout.glassIconButtonDiameter / 2
+                )
+                // Interactive glass tracks the pointer every frame, so it
+                // answers only while the button is there to press.
+                .glassEffect(.regular.interactive(isShown), in: .circle)
+                .frame(
+                    width: CrestLayout.minimumHitTarget, height: CrestLayout.minimumHitTarget,
+                    alignment: .bottom
+                )
+                .contentShape(.circle)
+        }
+        .labelStyle(.iconOnly)
+        .buttonStyle(.plain)
+        .scaleEffect(reduceMotion || isShown ? 1 : 0.5, anchor: .bottom)
+        .offset(y: reduceMotion ? -6 : isShown ? -6 : CrestLayout.glassIconButtonDiameter + 8)
+        .opacity(isShown ? 1 : 0)
+        .allowsHitTesting(isShown)
+        .accessibilityHidden(!isShown)
+        .accessibilityLabel("Show more tabs")
+        .accessibilityIdentifier("sidebar-more-tabs")
     }
 }
