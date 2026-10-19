@@ -4297,6 +4297,10 @@
     "setup-full-screen-look-choice": {
       "category": "new",
       "message": "Setup on the Mac fills the screen and asks whether your Spaces wear Crest's heraldic banners and crests or a modern gradient and icon, then carries that look through importing, reviewing and making your Spaces yours."
+    },
+    "private-new-tab-browser-pages": {
+      "category": "fixed",
+      "message": "A new tab for chrome://extensions, chrome://settings or chrome://history in a private window opens the page in your regular window instead of a blank tab."
     }
   }
 }

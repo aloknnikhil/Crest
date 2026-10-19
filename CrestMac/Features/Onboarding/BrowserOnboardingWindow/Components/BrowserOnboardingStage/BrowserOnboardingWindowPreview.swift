@@ -121,7 +121,7 @@ struct BrowserOnboardingWindowPreview<Page: View>: View {
         .foregroundStyle(.secondary)
         .padding(.horizontal, 12)
         .frame(height: BrowserChromeLayout.addressHeight)
-        .browserAddressFieldSurface(progress: 0, isLoading: false, isEditing: false, branding: branding)
+        .browserAddressFieldSurface(progress: { 0 }, isLoading: false, isEditing: false, branding: branding)
         .accessibilityHidden(true)
     }
 

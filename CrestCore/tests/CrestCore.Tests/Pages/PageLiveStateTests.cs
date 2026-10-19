@@ -181,6 +181,9 @@ public sealed partial class BrowserContractsTests {
         foreach (var address in new[] { "chrome://extensions", "CHROME://settings/passwords", "chrome://history/" })
             Assert.Equal(new AddressOutsidePrivateBrowsing(address), Refusal(app, new Navigate(page, address)));
         Assert.DoesNotContain(binding.Commands, command => command is LoadPage);
+        // Nor does a tab open for one.
+        Assert.Equal(new AddressOutsidePrivateBrowsing("chrome://extensions"), Refusal(app, new OpenTab(workspace, window,
+            space, Guid.NewGuid(), new TabContent("chrome://extensions", null, null), TabPlacement.Current, null, Shows: true)));
 
         // Its other internal pages load as they do anywhere.
         app.Send(new Navigate(page, "chrome://flags"));

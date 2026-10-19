@@ -65,7 +65,9 @@ extension BrowserStore {
     /// Opens a tab showing `content` in `placement`'s section and answers its
     /// identity, or nil when the core refused it. The core places a tab
     /// opened from `origin` after it and outside its split, resolves its
-    /// address and names a page it was given no title for.
+    /// address and names a page it was given no title for. A private window
+    /// hands a browser page that belongs outside private browsing to
+    /// `opensOutsidePrivateBrowsing` instead.
     @discardableResult
     func openSessionTab(
         _ content: TabContent, in spaceID: UUID, placement: TabPlacement = .current,
@@ -75,7 +77,17 @@ extension BrowserStore {
         let opening = OpenTab(
             workspaceID: family.workspaceID, windowID: windowID, spaceID: spaceID, tabID: id,
             content: content, placement: placement, afterTabID: origin, shows: shouldSelect)
-        return family.perform(opening, from: self) == nil ? nil : id
+        do {
+            try family.commit(opening, from: self)
+            return id
+        } catch {
+            if case .addressOutsidePrivateBrowsing(let refusal) = error, let url = URL(string: refusal.url) {
+                opensOutsidePrivateBrowsing(url)
+            } else {
+                localSyncErrorDescription = "Core command failed: \(error)"
+            }
+            return nil
+        }
     }
 
     /// Closes a tab the way its section closes one: the core archives an open
