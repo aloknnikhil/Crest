@@ -21,6 +21,9 @@ final class BrowserStore {
     /// Advances each time this window shows another Space or tab by an
     /// intent of its own, or a tab moves into or out of it.
     private var windowRevision = 0
+    /// The last move a Next or Previous Space command made in this window,
+    /// which the Space pager follows around the ends of the Spaces.
+    private(set) var spaceStep: BrowserSpaceStep?
     var localSyncErrorDescription: String?
     /// Opens a browser page private browsing refused, such as
     /// `chrome://extensions`, outside it. Set for a private window by its shell.
@@ -93,6 +96,7 @@ final class BrowserStore {
         guard sendWindowIntent(ShowAdjacentSpace(windowID: windowID, direction: direction.core)),
             selectedSpaceID != shown
         else { return nil }
+        spaceStep = BrowserSpaceStep(origin: shown, destination: selectedSpaceID, direction: direction)
         tabMultiSelection.clear()
         windowRevision &+= 1
         return selectedSpaceID

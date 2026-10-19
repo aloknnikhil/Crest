@@ -7,6 +7,9 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
     let space: SpaceModel?
     let reduceTransparency: Bool
     let spaces: [SpaceModel]
+    /// Whether the pointer brought a floating sidebar out by reaching the
+    /// window edge.
+    let isRevealedByPointer: Bool
     let hoverChanged: @MainActor @Sendable (Bool) -> Void
     /// Whether the layer moves itself off the window when collapsed, rather
     /// than leaving that to a host that slides it.
@@ -22,6 +25,7 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
         space: SpaceModel?,
         reduceTransparency: Bool,
         spaces: [SpaceModel] = [],
+        isRevealedByPointer: Bool = false,
         hoverChanged: @escaping @MainActor @Sendable (Bool) -> Void,
         slidesItself: Bool = true,
         @ViewBuilder content: () -> Content
@@ -32,6 +36,7 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
         self.space = space
         self.reduceTransparency = reduceTransparency
         self.spaces = spaces
+        self.isRevealedByPointer = isRevealedByPointer
         self.hoverChanged = hoverChanged
         self.slidesItself = slidesItself
         self.content = content()
@@ -58,7 +63,11 @@ struct BrowserRootSidebarSurfaceLayer<Content: View>: View {
                     // stay over the page it slid away from, where it would
                     // take the page's cursor updates.
                     if presentation.showsSidebar {
-                        BrowserSidebarHoverTracker(onHoverChange: hoverChanged).accessibilityHidden(true)
+                        BrowserSidebarHoverTracker(
+                            isRevealedByPointer: isRevealedByPointer,
+                            onHoverChange: hoverChanged
+                        )
+                        .accessibilityHidden(true)
                     }
                 }
             #else

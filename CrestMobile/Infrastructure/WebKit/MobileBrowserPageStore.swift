@@ -587,6 +587,11 @@ final class MobileBrowserPageStore:
         loadsInitialURL: Bool = true,
         opener: UUID? = nil
     ) -> MobileBrowserPage? {
+        if opener == nil {
+            host.restoreTabHistory(
+                for: BrowserTabRuntimeAssignment(tabID: tab.id, spaceID: space.id, profileID: space.profileID),
+                expecting: tab.url, in: browser)
+        }
         guard let opening = browser.openPage(in: space.id, for: tab.id, opener: opener) else { return nil }
         // A page the core brings back shows itself heading to what it kept,
         // and restores that in place of its first load.

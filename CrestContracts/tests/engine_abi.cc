@@ -211,6 +211,10 @@ void CodecRoundTrips() {
                                .color = engine::TabGroupColor::kOrange,
                                .is_collapsed = true,
                                .page_ids = {page}},
+      engine::PageHistoryReported{.page_id = page,
+                                  .entries = {{.id = Filled(0x7c), .url = "https://example.com/a", .title = "A"},
+                                              {.id = Filled(0x7d), .url = "https://example.com/", .title = "Example"}},
+                                  .current = 1},
       engine::PageIconChanged{.page_id = page, .url = "https://example.com/", .accent = engine::TabIconAccent{0.25, 0.5, 1}},
       engine::PageOffered{.offer_id = Filled(0x78),
                           .profile_id = Filled(0x76),
@@ -224,7 +228,6 @@ void CodecRoundTrips() {
                                             .pending_url = std::nullopt,
                                             .title = "Example",
                                             .is_loading = true,
-                                            .can_go_back = true,
                                             .security = engine::PageSecurity::kMixedContent,
                                             .media = engine::PageMediaActivity::kPlaying |
                                                      engine::PageMediaActivity::kPictureInPicture}},

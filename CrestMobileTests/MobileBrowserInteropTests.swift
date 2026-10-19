@@ -814,4 +814,6 @@ private final class SigningInPromptHost: WebKitPageHosting {
     func prepareToLoad(_ url: URL) {}
 
     func mediaActivityMayHaveChanged() {}
+
+    func historyMayHaveChanged() {}
 }

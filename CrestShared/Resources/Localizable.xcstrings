@@ -2112,6 +2112,9 @@
     "Apple translates page text on this device. Languages may need to download first; Apple asks before downloading. Downloaded languages are shared with other apps and remain available after Private Browsing ends." : {
 
     },
+    "Apple Translation doesn’t support %@." : {
+
+    },
     "Apple Translation requires a physical device. It is not available in Simulator." : {
 
     },
@@ -10133,9 +10136,6 @@
         }
       }
     },
-    "Reader and page translation" : {
-
-    },
     "Reader Mode" : {
       "localizations" : {
         "ar" : {
@@ -11055,6 +11055,9 @@
       "extractionState" : "manual"
     },
     "Route actions" : {
+
+    },
+    "Routes apply to links from other apps. The first matching route wins." : {
 
     },
     "Routing" : {
@@ -13402,9 +13405,6 @@
 
     },
     "The file couldn’t be saved in its folder." : {
-
-    },
-    "The first matching route wins." : {
 
     },
     "The original filename used invisible or direction-changing characters that can disguise its real extension." : {

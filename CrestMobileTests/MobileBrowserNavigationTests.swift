@@ -1420,4 +1420,6 @@ private final class MediaActivityHost: WebKitPageHosting {
     func mediaActivityMayHaveChanged() {
         mediaChanges += 1
     }
+
+    func historyMayHaveChanged() {}
 }
