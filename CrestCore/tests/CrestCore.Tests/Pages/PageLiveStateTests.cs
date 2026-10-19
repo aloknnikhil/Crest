@@ -161,4 +161,29 @@ public sealed partial class BrowserContractsTests {
         app.Send(new SetSpaceAccess(workspace, space, SpaceAccessPolicy.DeviceOwnerAuthentication));
         Assert.Equal(new SpaceLocked(space), Refusal(app, new Navigate(page, "example.org")));
     }
+
+    [Fact]
+    public void APrivatePageSendsTheBrowsersOwnPagesOutsidePrivateBrowsing() {
+        using var app = new CrestApp();
+        var binding = new RecordingEngine();
+        var engine = app.RegisterEngine(new EngineRegistration(EngineKind.Chromium,
+            [.. EngineCapability.Required, EngineCapability.InternalPages], IsDefault: true), binding.Run);
+        var workspace = TestWorkspaces.Opened(app.Send(new OpenWorkspace(WorkspaceKind.Private, Seed: null)));
+        var space = app.Workspace(workspace).Current.Spaces.Single().Id;
+        var window = Guid.NewGuid();
+        app.Send(new OpenWindow(window, workspace, Saved: false, null, null, [], RestoresTabs: true));
+        var page = Guid.NewGuid();
+        app.Send(new OpenPage(page, workspace, space, null, window));
+        app.Report(engine, new PageCreated(page));
+
+        // The browser's pages of the profile behind private browsing never
+        // load in it, however they are spelled.
+        foreach (var address in new[] { "chrome://extensions", "CHROME://settings/passwords", "chrome://history/" })
+            Assert.Equal(new AddressOutsidePrivateBrowsing(address), Refusal(app, new Navigate(page, address)));
+        Assert.DoesNotContain(binding.Commands, command => command is LoadPage);
+
+        // Its other internal pages load as they do anywhere.
+        app.Send(new Navigate(page, "chrome://flags"));
+        Assert.Equal(new LoadPage(page, "chrome://flags"), binding.Commands[^1]);
+    }
 }

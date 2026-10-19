@@ -80,6 +80,11 @@ public sealed record DuplicatePage(Guid PageId) : Rejection;
 /// the page closed.
 public sealed record PageNotLoadable(Guid PageId) : Rejection;
 
+/// Private browsing cannot show `Url`, a browser page that belongs to the
+/// profile behind it, such as its extensions or settings. It opens in a
+/// regular window instead.
+public sealed record AddressOutsidePrivateBrowsing(string Url) : Rejection;
+
 /// The Space keeps another profile than the one the page's engine page lives
 /// in, so the page cannot move there.
 public sealed record PageProfileMismatch(Guid PageId, Guid SpaceId) : Rejection;

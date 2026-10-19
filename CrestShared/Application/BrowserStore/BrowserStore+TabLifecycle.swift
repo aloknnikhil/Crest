@@ -281,14 +281,25 @@ extension BrowserStore {
     /// Gives the selected tab, while it shows a native view or the Start
     /// Page, the address `input` names by its Space's rules, so a page can
     /// open for it. False when it changed nothing: the tab shows a web page,
-    /// the input was blank, or a rule refused it.
+    /// the input was blank, or a rule refused it. A private tab hands a
+    /// browser page that belongs outside private browsing to
+    /// `opensOutsidePrivateBrowsing` instead.
     @discardableResult
     func navigateSelectedTab(to input: String) -> Bool {
         guard let space = shownSpace, let tab = shownTab, !tab.surface.showsPage else { return false }
-        return family.send(
-            NavigateTab(
-                workspaceID: family.workspaceID, spaceID: space.id, tabID: tab.id, input: input),
-            from: self, failure: "Core navigation failed")
+        do {
+            try family.commit(
+                NavigateTab(workspaceID: family.workspaceID, spaceID: space.id, tabID: tab.id, input: input),
+                from: self)
+            return true
+        } catch {
+            if case .addressOutsidePrivateBrowsing(let refusal) = error, let url = URL(string: refusal.url) {
+                opensOutsidePrivateBrowsing(url)
+            } else {
+                localSyncErrorDescription = "Core navigation failed: \(error)"
+            }
+            return false
+        }
     }
 
 }

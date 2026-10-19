@@ -8,7 +8,9 @@ namespace CrestCore.Contracts;
 /// address rules of the page's Space and engine, shows the page heading there
 /// and asks the page's engine to load it. Refused when the page is not open or
 /// its engine holds no page to load into, its Space is locked or being
-/// deleted, or `Input` names nothing a page can load, as blank input does.
+/// deleted, `Input` names nothing a page can load, as blank input does, or a
+/// private page is asked for a browser page that belongs outside private
+/// browsing.
 public sealed record Navigate(Guid PageId, string Input) : PageIntent {
     #region Actions - Pages
 
@@ -26,6 +28,8 @@ public sealed record Navigate(Guid PageId, string Input) : PageIntent {
         bool isPrivate = pages.Device.Workspace(page.WorkspaceId).Kind.IsPrivate;
         var url = resolve(pages.Device.SearchCatalog.For(space.Settings.BrowsingPreferences, isPrivate),
             page.Engine.Supports(EngineCapability.InternalPages));
+        if (isPrivate && AddressResolution.OpensOutsidePrivateBrowsing(url))
+            throw new Rejected(new AddressOutsidePrivateBrowsing(url));
         if (pages.Chosen(space, url) is { } chosen && !ReferenceEquals(chosen, page.Engine)) {
             turn.Closing.Move(page, chosen, url, RehostReason.SiteChoice, remembersSite: false, turn);
             return;

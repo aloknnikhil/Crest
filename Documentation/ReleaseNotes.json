@@ -4153,6 +4153,10 @@
     "link-menu-new-tab-first": {
       "category": "improved",
       "message": "Open Link in New Tab is the first choice when you right-click a link."
+    },
+    "private-browser-pages-open-regular": {
+      "category": "fixed",
+      "message": "Opening chrome://extensions, chrome://settings or chrome://history in a private window no longer quits Crest; the page opens in your regular window."
     }
   }
 }

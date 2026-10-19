@@ -91,6 +91,7 @@ final class BrowserMacShell {
             dockMenu: BrowserMacDockMenu(application: application, windows: windows),
             externalOpening: BrowserMacExternalOpening(application: application, windows: windows),
             agents: BrowserMacAgents(application: application, windows: windows))
+        application.privateBrowser.opensOutsidePrivateBrowsing = { [weak self] in self?.openOutsidePrivateBrowsing($0) }
         recovery?.close()
         recovery = nil
         guard application.presentsInstalledApplicationUI else { return }
@@ -179,6 +180,12 @@ final class BrowserMacShell {
         }
         Task { @MainActor in await running.externalOpening.open(accepted) }
         return true
+    }
+
+    /// Opens a page private browsing cannot show in a regular window instead.
+    func openOutsidePrivateBrowsing(_ url: URL) {
+        guard let running else { return }
+        Task { @MainActor in await running.externalOpening.openOutsidePrivateBrowsing(url) }
     }
 
     // MARK: - Actions - System sign-in

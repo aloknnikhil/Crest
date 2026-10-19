@@ -16,9 +16,24 @@ public sealed record AddressResolution(string Url, string? SearchQuery) {
     public const string CrestPrefix = CrestScheme + "://";
     public const string ChromeExtensionPrefix = ChromeExtensionScheme + "://";
 
+    // The browser's pages that belong to the profile behind private browsing,
+    // which a private page never shows.
+    private static readonly HashSet<string> PagesOutsidePrivateBrowsing = new(StringComparer.OrdinalIgnoreCase) {
+        "extensions", "settings", "history", "help", "password-manager", "chrome-signin", "uber",
+    };
+
     #endregion
 
     #region Actions - Navigation
+
+    /// Whether `url` is a browser page of the profile behind private browsing,
+    /// such as `chrome://extensions`, which only a regular window shows.
+    public static bool OpensOutsidePrivateBrowsing(string url) {
+        ArgumentNullException.ThrowIfNull(url);
+        return Uri.TryCreate(url.Trim(), UriKind.Absolute, out var parsed)
+            && parsed.Scheme.Equals(ChromeScheme, StringComparison.OrdinalIgnoreCase)
+            && PagesOutsidePrivateBrowsing.Contains(parsed.Host);
+    }
 
     /// The address a page loads for what the person typed or chose in a Space
     /// that searches with `provider`, on an engine that shows internal pages

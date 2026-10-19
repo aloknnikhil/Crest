@@ -83,6 +83,22 @@ final class BrowserMacExternalOpening {
         present(request)
     }
 
+    /// Opens a page private browsing cannot show, such as `chrome://extensions`,
+    /// as a tab in the regular window and Space on screen, as Chrome does.
+    func openOutsidePrivateBrowsing(_ url: URL) async {
+        let browser = application.browser
+        let regularWindowIDs = application.stackedWindowIDs.filter { $0 != application.privatePages.windowID }
+        guard
+            let placement = try? browser.core.query(RouteLocalDocument(windowIDs: regularWindowIDs)),
+            placement.windowID != application.privatePages.windowID,
+            let spaceID = placement.spaceID, let space = browser.spaceModel(spaceID),
+            await application.spaceAccess.unlock(space),
+            let request = preparedWindow(placement.windowID, opens: placement.opensWindow),
+            application.openTab(url, in: BrowserSpaceRuntimeAssignment(space: space), window: request.id)
+        else { return }
+        present(request)
+    }
+
     /// Where a link from another app lands, or nil when it lands nowhere. The
     /// core never routes one to a locked Space, so the unlock only confirms
     /// the Space is still open to this process.

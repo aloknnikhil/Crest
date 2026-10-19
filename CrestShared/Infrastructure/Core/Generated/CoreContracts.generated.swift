@@ -185,6 +185,7 @@ enum Change: Equatable, Sendable {
 
 /// The rule that refused an intent or a query.
 enum Rejection: Equatable, Error, Sendable {
+    case addressOutsidePrivateBrowsing(AddressOutsidePrivateBrowsing)
     case agentNotApproved(AgentNotApproved)
     case agentSessionsFull(AgentSessionsFull)
     case agentSpaceUnavailable(AgentSpaceUnavailable)
@@ -792,6 +793,10 @@ struct AddressCompletion: Equatable, Sendable {
     let typed: String
     let suffix: String
     let accepted: String
+}
+
+struct AddressOutsidePrivateBrowsing: Equatable, Sendable {
+    let url: String
 }
 
 struct AdoptLegacySession: Intent, Equatable, Sendable {

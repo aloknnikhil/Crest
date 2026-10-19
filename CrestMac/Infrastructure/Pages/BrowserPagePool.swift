@@ -612,7 +612,7 @@ final class BrowserPagePool:
     /// window shows. False when there is none or a rule refused it.
     @discardableResult
     func navigate(to input: String) -> Bool {
-        activePage?.corePage.navigate(to: input) ?? false
+        activePage?.corePage.navigate(to: input, outsidePrivateBrowsing: browser.opensOutsidePrivateBrowsing) ?? false
     }
 
     /// Asks the core to load `url`, an address Crest already holds, in the

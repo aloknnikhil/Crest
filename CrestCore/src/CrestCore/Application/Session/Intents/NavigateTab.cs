@@ -9,8 +9,9 @@ namespace CrestCore.Contracts;
 /// tab that already shows a web page keeps its address until its engine
 /// reports where the navigation landed, so the intent changes nothing for it.
 /// Refused when the workspace, Space or tab is not there, the Space is locked
-/// or being deleted, or `Input` names nothing a page can load, as blank input
-/// does.
+/// or being deleted, `Input` names nothing a page can load, as blank input
+/// does, or a private tab is asked for a browser page that belongs outside
+/// private browsing.
 public sealed record NavigateTab(Guid WorkspaceId, Guid SpaceId, Guid TabId, string Input) : SessionIntent(WorkspaceId) {
     #region Actions - Session
 
@@ -24,6 +25,8 @@ public sealed record NavigateTab(Guid WorkspaceId, Guid SpaceId, Guid TabId, str
         var stored = space.Tabs.FirstOrDefault(tab => tab.Id == TabId) ?? throw new Rejected(new UnknownTab(TabId));
         var url = AddressResolution.Loading(Input, workspace.SearchCatalog.For(space.Settings.BrowsingPreferences, workspace.Kind.IsPrivate),
             turn.Pages?.OpensInternalPages ?? false);
+        if (workspace.Kind.IsPrivate && AddressResolution.OpensOutsidePrivateBrowsing(url))
+            throw new Rejected(new AddressOutsidePrivateBrowsing(url));
         var tab = BrowserTab.Restore(stored);
         if (tab.Content.IsWebPage) return new(turn.Basis, SyncStaging.PageReport);
         var address = new Uri(url);

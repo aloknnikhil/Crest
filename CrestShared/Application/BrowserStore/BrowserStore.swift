@@ -22,6 +22,9 @@ final class BrowserStore {
     /// intent of its own, or a tab moves into or out of it.
     private var windowRevision = 0
     var localSyncErrorDescription: String?
+    /// Opens a browser page private browsing refused, such as
+    /// `chrome://extensions`, outside it. Set for a private window by its shell.
+    @ObservationIgnored var opensOutsidePrivateBrowsing: (URL) -> Void = { _ in }
     let browsingMode: BrowserBrowsingMode
     let tabMultiSelection = BrowserTabMultiSelection()
     let family: BrowserStoreFamily

@@ -115,14 +115,20 @@ final class CorePage {
     /// Asks the core to load what the person typed or chose, an address or
     /// words to search for, which the core resolves by the rules of the
     /// page's Space and engine. False when a rule refuses it, such as a locked
-    /// Space or input that names nothing a page can load.
+    /// Space or input that names nothing a page can load. A private page hands
+    /// a browser page that belongs outside private browsing to
+    /// `outsidePrivateBrowsing` instead.
     @discardableResult
-    func navigate(to input: String) -> Bool {
+    func navigate(to input: String, outsidePrivateBrowsing: (URL) -> Void = { _ in }) -> Bool {
         guard !isReleased, let core else { return false }
         do {
             try core.send(Navigate(pageID: id, input: input))
             return true
         } catch {
+            if case .addressOutsidePrivateBrowsing(let refusal) = error, let url = URL(string: refusal.url) {
+                outsidePrivateBrowsing(url)
+                return true
+            }
             Self.logger.debug(
                 "The core loaded nothing in page \(self.id, privacy: .public): \(String(describing: error))")
             return false
